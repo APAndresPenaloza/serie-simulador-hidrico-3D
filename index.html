@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Simulador hídrico 3D · Serie</title>
+  <meta name="description" content="Serie de simuladores hídricos 3D: laguna, lago, río, ciénaga, delta, costa, océano y el sistema conectado del páramo al mar.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 3C16 3 6 14.5 6 20.5a10 10 0 0 0 20 0C26 14.5 16 3 16 3z' fill='%231C86B8'/%3E%3C/svg%3E">
+  <style>
+    :root { --fondo: #E6ECEA; --panel: #F6F8F7; --tinta: #12303B; --tinta-2: #4B6670; --linea: #C6D2D1; --agua: #1C86B8; --ocre: #B4823F; --ok: #2F7D5B; }
+    @media (prefers-color-scheme: dark) {
+      :root { --fondo: #0E2027; --panel: #132A33; --tinta: #E2EDEF; --tinta-2: #9BB5BC; --linea: #28454F; --agua: #49ADDA; --ocre: #D3A25E; --ok: #5BBE8E; }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--fondo); color: var(--tinta); font: 16px/1.55 "Segoe UI", system-ui, -apple-system, sans-serif; }
+    header { padding: 40px 20px 24px; max-width: 1100px; margin: 0 auto; }
+    header h1 { margin: 0 0 6px; font-size: 30px; display: flex; gap: 12px; align-items: center; }
+    header h1 svg { width: 34px; height: 34px; fill: var(--agua); flex: none; }
+    header p { margin: 0; color: var(--tinta-2); max-width: 75ch; }
+    main { max-width: 1100px; margin: 0 auto; padding: 0 20px 48px; }
+    .red { background: var(--panel); border: 1px solid var(--linea); border-radius: 10px; padding: 16px; margin: 8px 0 28px; }
+    .red svg { width: 100%; height: auto; display: block; }
+    .red text { font-size: 12px; fill: var(--tinta); font-family: inherit; }
+    .red .t2 { font-size: 10.5px; fill: var(--tinta-2); }
+    h2 { font-size: 19px; margin: 28px 0 12px; }
+    .tarjetas { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
+    a.tarjeta { display: flex; flex-direction: column; gap: 6px; text-decoration: none; color: inherit; background: var(--panel); border: 1px solid var(--linea); border-radius: 10px; padding: 16px; transition: border-color .15s, transform .15s; }
+    a.tarjeta:hover, a.tarjeta:focus-visible { border-color: var(--agua); transform: translateY(-2px); outline: none; }
+    .tarjeta .n { font-size: 12px; color: var(--agua); font-weight: 650; letter-spacing: .04em; text-transform: uppercase; }
+    .tarjeta h3 { margin: 0; font-size: 17px; }
+    .tarjeta p { margin: 0; font-size: 14px; color: var(--tinta-2); }
+    .tarjeta.sistema { border-color: var(--agua); background: color-mix(in srgb, var(--agua) 8%, var(--panel)); }
+    .nota { font-size: 14px; color: var(--tinta-2); background: var(--panel); border-left: 3px solid var(--ocre); padding: 10px 14px; border-radius: 4px; margin-top: 28px; }
+    code { font-size: 13px; background: var(--fondo); padding: 1px 5px; border-radius: 3px; }
+    footer { max-width: 1100px; margin: 0 auto; padding: 0 20px 32px; font-size: 13px; color: var(--tinta-2); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3C16 3 6 14.5 6 20.5a10 10 0 0 0 20 0C26 14.5 16 3 16 3z"/></svg>Simulador hídrico 3D</h1>
+    <p>Serie de simuladores web en 3D para estudiar el agua de Colombia con álgebra y geometría analítica, del páramo al océano. Cada simulador es autónomo y entrega a sus vecinos lo que sale de él; el sistema conectado los une a todos.</p>
+  </header>
+  <main>
+    <div class="red" role="img" aria-label="Red de la serie: laguna, lago, río, ciénaga, delta, playa y océano">
+      <svg viewBox="0 0 900 190">
+        <defs><marker id="p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#4B6670"/></marker></defs>
+        <g fill="none" stroke="#1C86B8" stroke-width="3" marker-end="url(#p)">
+          <path d="M78 95 H148"/><path d="M198 95 H268"/><path d="M318 95 H388"/><path d="M438 88 H508"/><path d="M508 102 H438"/><path d="M558 95 H628"/>
+        </g>
+        <path d="M533 70 C 560 20, 700 20, 790 62" fill="none" stroke="#B4823F" stroke-width="2.5" marker-end="url(#p)"/>
+        <g fill="none" stroke="#4B6670" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#p)">
+          <path d="M650 120 C 600 165, 470 165, 418 122"/><path d="M652 112 C 620 140, 560 140, 540 120"/><path d="M700 95 H780"/>
+        </g>
+        <g stroke="#1C86B8" stroke-width="2.5" fill="#F6F8F7">
+          <circle cx="55" cy="95" r="22"/><circle cx="175" cy="95" r="22"/><circle cx="295" cy="95" r="22"/><circle cx="415" cy="95" r="22"/><circle cx="535" cy="95" r="22"/><circle cx="675" cy="95" r="24" fill="#1C86B8"/><circle cx="805" cy="95" r="22"/>
+        </g>
+        <g text-anchor="middle">
+          <text x="55" y="140">Laguna</text><text x="175" y="140">Lago</text><text x="295" y="140">Río</text><text x="415" y="140">Ciénaga</text><text x="535" y="140">Delta</text><text x="675" y="145">Océano</text><text x="805" y="140">Playa</text>
+          <text class="t2" x="660" y="28">arena del río grande</text><text class="t2" x="540" y="180">nivel, marea, oleaje y salinidad del mar</text>
+        </g>
+      </svg>
+    </div>
+
+    <h2>Los simuladores</h2>
+    <div class="tarjetas">
+      <a class="tarjeta" href="simulador-hidrico-3D%20-%20Lagunas/"><span class="n">1 · Lagunas</span><h3>Laguna de alta montaña</h3><p>Laguna glaciar del páramo: balance de agua, glaciar, regulación del páramo, calidad, sedimentos y amenazas.</p></a>
+      <a class="tarjeta" href="simulador-hidrico-3D%20-%20Lagos/"><span class="n">2 · Lagos</span><h3>Lago andino</h3><p>Lago profundo de alta montaña: estratificación, viento, oxígeno, nutrientes (Vollenweider y Carlson) y nivel.</p></a>
+      <a class="tarjeta" href="simulador-hidrico-3D%20-%20Rios%20exorreicos/"><span class="n">3 · Ríos exorreicos</span><h3>Río de la Sierra Nevada</h3><p>El proyecto de referencia: lluvia, río, represa, captación, bombeo, tuberías, red, riego, huella, acuífero y arroyo.</p></a>
+      <a class="tarjeta" href="simulador-hidrico-3D%20-%20Cienagas/"><span class="n">4 · Ciénagas</span><h3>Ciénaga Grande</h3><p>Laguna costera: caños del río grande, marea, salinidad, manglar, calidad del agua y sedimentos.</p></a>
+      <a class="tarjeta" href="simulador-hidrico-3D%20-%20Deltas/"><span class="n">5 · Deltas</span><h3>Delta del río grande</h3><p>Desembocadura: canales, cuña salina, pluma, avance del delta, oleaje y dragado del canal de acceso.</p></a>
+      <a class="tarjeta" href="simulador-hidrico-3D%20-%20Costas/"><span class="n">6 · Costas</span><h3>Playa del Caribe</h3><p>Playa de bahía: oleaje y rompiente, nivel del mar y remonte, perfil y regla de Bruun, arena y calidad del agua.</p></a>
+      <a class="tarjeta" href="simulador-hidrico-3D%20-%20Oceanos/"><span class="n">7 · Océanos</span><h3>Mar Caribe</h3><p>Mar abierto: olas, mareas, Ekman y afloramiento, temperatura y coral, pluma, nivel del mar y acidificación.</p></a>
+      <a class="tarjeta sistema" href="simulador-hidrico-3D%20-%20Sistema%20conectado/"><span class="n">8 · Sistema conectado</span><h3>Del páramo al océano</h3><p>Une los siete modelos: composición de funciones, matriz de la red, lazo de la costa, trazadores, clima y horizonte.</p></a>
+    </div>
+
+    <p class="nota">Para que los simuladores funcionen (y el sistema conectado encuentre a los demás) hay que servir esta carpeta con un servidor local, por ejemplo <code>python -m http.server 8000</code>, y abrir <code>http://localhost:8000</code>. Abrir los archivos con doble clic no funciona porque los navegadores bloquean los módulos de JavaScript. Cada carpeta tiene en <code>documentos/</code> su informe técnico científico y su manual de usuario.</p>
+  </main>
+  <footer>Proyecto de Álgebra y Geometría Analítica, 2026-II · Institución Universitaria de Santa Marta (USM) · Programa de Ingeniería del Agua y Desarrollo Sostenible.</footer>
+</body>
+</html>
