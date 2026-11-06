@@ -1,0 +1,10 @@
+{
+  "paquete": "simulador-hidrico-3d-oceanos",
+  "titulo": "Simulador hídrico 3D",
+  "subtitulo": "Océanos · referencia: mar Caribe frente a Colombia",
+  "descripcion": "Simulador interactivo 3D del mar abierto: olas de los alisios (Pierson y Moskowitz, energía, potencia y distribución de Rayleigh), mareas y batidos, Coriolis, transporte y espiral de Ekman y afloramiento en La Guajira, termoclina y blanqueamiento del coral, pluma del río y densidad del agua de mar, ascenso del nivel del mar y acidificación.",
+  "etiquetaEscena": "Vista 3D esquemática del mar Caribe",
+  "ayuda": "Arrastra para girar la vista y usa la rueda o dos dedos para acercar. Toca un componente para ver sus controles; con los botones de arriba vas a la columna de agua, al afloramiento de La Guajira o al arrecife de coral.",
+  "leyenda": "<span class=\"muestra muestra-flujo\"></span>Viento y corrientes <span class=\"muestra muestra-ocre\"></span>Pluma del río <span class=\"muestra muestra-salado\"></span>Agua de mar (más clara: más fría) <span class=\"nota\">Escena esquemática: olas, distancias y profundidades fuera de escala.</span>",
+  "pie": "Proyecto de Álgebra y Geometría Analítica, 2026-II · Serie de simuladores hídricos 3D. ρ = 1 025 kg/m³; Ω = 7.292·10⁻⁵ rad/s; g = 9.81 m/s²."
+}
