@@ -1,0 +1,10 @@
+{
+  "paquete": "simulador-hidrico-3d-cienagas",
+  "titulo": "Simulador hídrico 3D",
+  "subtitulo": "Ciénagas costeras · referencia: Ciénaga Grande de Santa Marta",
+  "descripcion": "Simulador interactivo 3D de una ciénaga costera: caños del río Magdalena y ríos de la Sierra Nevada, nivel y volumen de una laguna somera, marea del Caribe y Boca de la Barra, salinidad de equilibrio e hipersalinidad, estrés del manglar por especie, pesca, oxígeno y sedimentación.",
+  "etiquetaEscena": "Vista 3D de la ciénaga costera",
+  "ayuda": "Arrastra para girar la vista y usa la rueda o dos dedos para acercar. Toca un componente para ver sus controles; con los botones de arriba vas a los caños del Magdalena, a la boca o al pueblo de palafitos.",
+  "leyenda": "<span class=\"muestra muestra-flujo\"></span>Agua que fluye <span class=\"muestra muestra-ocre\"></span>Agua turbia del Magdalena <span class=\"muestra muestra-salado\"></span>Agua salada <span class=\"nota\">Distancias horizontales a escala; niveles y profundidades exagerados ×360.</span>",
+  "pie": "Proyecto de Álgebra y Geometría Analítica, 2026-II · Serie de simuladores hídricos 3D. Salinidad en PSU (g de sal por kg de agua); g = 9.81 m/s²."
+}
