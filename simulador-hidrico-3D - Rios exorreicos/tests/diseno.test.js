@@ -1,0 +1,228 @@
+// Pruebas del diseño: catálogo de tuberías, demanda, control de la bomba,
+// golpe de ariete y red ramificada. Ejecutar con:  npm test
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import * as M from '../js/modelo.js';
+import * as D from '../js/diseno.js';
+import * as S from '../js/sistema.js';
+
+const cerca = (a, b, tol = 1e-6) =>
+  assert.ok(Math.abs(a - b) <= tol, `esperado ${b}, obtenido ${a} (tol ${tol})`);
+
+const base = () => {
+  const p = { ...M.PARAMETROS_INICIALES, ...S.PARAMETROS_DISENO };
+  S.sincronizarTubos(p);
+  return p;
+};
+
+test('Catálogo: PVC 6" RDE 21 según NTC 382', () => {
+  const e = D.especTubo('pvc', 'RDE 21', '6"');
+  cerca(e.DE * 1000, 168.28, 0.01);             // diámetro externo IPS
+  cerca(e.e * 1000, 168.28 / 21, 0.01);         // espesor = DE / RDE = 8.01 mm
+  cerca(e.DI * 1000, 152.25, 0.05);             // DI = DE − 2e
+  cerca(e.pnMPa, (2 * 13.79) / 20, 1e-6);       // PR = 2S/(RDE − 1) = 1.379 MPa
+  cerca(e.pnMca, 141, 1);                       // ≈ 141 m.c.a.
+  assert.equal(e.C, 150);
+});
+
+test('Catálogo: cada material tiene su C de Hazen-Williams', () => {
+  assert.equal(D.MATERIALES.pvc.C, 150);
+  assert.ok(D.MATERIALES.pead.C >= 140 && D.MATERIALES.pead.C <= 145);
+  assert.ok(D.MATERIALES.grp.C >= 130 && D.MATERIALES.grp.C <= 135);
+  assert.equal(D.MATERIALES.hd.C, 130);
+  assert.ok(D.MATERIALES.ccp.C >= 110 && D.MATERIALES.ccp.C <= 120);
+  // PEAD PE100 SDR 11: PN = 16 / (SDR − 1) = 1.6 MPa
+  const pe = D.especTubo('pead', 'SDR 11', '63 mm');
+  cerca(pe.pnMPa, 1.6, 1e-9);
+});
+
+test('Hazen-Williams: h = 10.67·L·Q^1.852 / (C^1.852·D^4.87)', () => {
+  const h = D.perdidaHazen(0.01, 100, 0.1, 150);
+  const esperado = (10.67 * 100 * 0.01 ** 1.852) / (150 ** 1.852 * 0.1 ** 4.87);
+  cerca(h, esperado, 1e-9);
+  // Tubería más rugosa (C menor) pierde más
+  assert.ok(D.perdidaHazen(0.01, 100, 0.1, 110) > h);
+});
+
+test('Demanda: Qmd, QMD = k1·Qmd y QMH = k2·QMD', () => {
+  const q = D.caudalMedioVivienda(4, 140, 0.25);
+  cerca(q * 1000, (4 * 140) / 0.75 / 86400, 1e-12); // 0.00864 L/s
+  const c = D.caudalesDiseno(0.001, 1.3, 1.6);
+  cerca(c.QMD, 0.0013, 1e-12);
+  cerca(c.QMH, 0.00208, 1e-12);
+});
+
+test('Curva horaria: promedio 1 y pico igual a k2', () => {
+  for (const k2 of [1.5, 1.6, 1.8]) {
+    const f = D.factoresHorarios(k2);
+    assert.equal(f.length, 24);
+    cerca(f.reduce((a, b) => a + b, 0) / 24, 1, 1e-9);
+    cerca(Math.max(...f), k2, 0.02);
+  }
+});
+
+test('Volumen de regulación: máx − mín de la curva de masa, cierra en cero', () => {
+  const v = D.volumenRegulacion(0.01085, 1.6);
+  cerca(v.masa[24], 0, 1e-6);                    // lo que entra en el día = lo que sale
+  cerca(v.V, Math.max(...v.masa) - Math.min(...v.masa), 1e-9);
+  assert.ok(v.fraccion > 0.1 && v.fraccion < 0.3);
+});
+
+test('Control de la bomba: histéresis entre arranque y parada', () => {
+  const p = { controlBomba: 'automatico', nivelArranque: 3, nivelParada: 4.75 };
+  assert.equal(D.controlBomba(p, 4.75, true), false);  // llega a la parada: se apaga
+  assert.equal(D.controlBomba(p, 4.0, false), false);  // bajando entre niveles: sigue apagada
+  assert.equal(D.controlBomba(p, 3.0, false), true);   // llega al arranque: enciende
+  assert.equal(D.controlBomba(p, 4.0, true), true);    // subiendo entre niveles: sigue encendida
+  assert.equal(D.controlBomba({ controlBomba: 'continuo' }, 5, true), true);
+  // Con el río por debajo de la rejilla de la bocatoma (1.60 m + 0.15 m de lámina) no hay
+  // agua que bombear: la bomba se detiene en cualquier modo y a cualquier nivel
+  assert.equal(D.controlBomba({ ...p, cotaRio: 1.75 }, 2.0, false), true);
+  assert.equal(D.controlBomba({ ...p, cotaRio: 1.7 }, 2.0, false), false);
+  assert.equal(D.controlBomba({ controlBomba: 'continuo', cotaRio: 1.5 }, 5, true), false);
+});
+
+test('Tanque: el nivel queda entre los interruptores y la bomba arranca y para', () => {
+  const p = base();
+  let e = { nivel: 4.4, bomba: true, t: 7 * 3600, arranques: 0 };
+  let min = Infinity, max = -Infinity, cambios = 0, arr = 0;
+  for (let i = 0; i < 48 * 12; i++) {
+    const antes = e.bomba;
+    e = D.avanzarTanque(p, e, 300);
+    if (e.bomba !== antes) cambios++;
+    arr += e.arranques;
+    min = Math.min(min, e.nivel);
+    max = Math.max(max, e.nivel);
+  }
+  assert.ok(max <= p.nivelParada + 1e-6, `máximo ${max}`);
+  assert.ok(min >= p.nivelArranque - 0.05, `mínimo ${min}`);
+  assert.ok(cambios >= 2 && arr >= 1, `cambios ${cambios}, arranques ${arr}`);
+});
+
+test('Tanque: el ciclo con consumo igual al QMD', () => {
+  const p = base();
+  const c = D.cicloBomba(p);
+  const A = M.areaTanque(p.Dtanque);
+  cerca(c.dV, A * (p.nivelParada - p.nivelArranque), 1e-9);
+  cerca(c.tLlenado, c.dV / ((p.Qbombeo - p.Qdemanda) / 1000), 1e-6);
+  cerca(c.horasDia, 24 * c.tLlenado / c.ciclo, 1e-9);
+});
+
+test('Costo mensual: no cambia cuando la bomba se apaga o se prende', () => {
+  const p = base();
+  const C0 = S.calcular(p, { nivel: 4.4, bomba: true, t: 6 * 3600 }).costo.costo;
+  // Mismo costo con la bomba apagada o prendida, a cualquier nivel y a cualquier hora
+  for (const [nivel, bomba, hora] of [[4.75, false, 6], [3.9, false, 14], [3.0, true, 19], [4.5, true, 2]]) {
+    cerca(S.calcular(p, { nivel, bomba, t: hora * 3600 }).costo.costo, C0, 1e-6);
+  }
+  // Horas = 24·QMD/Qb = 24 × 10.85/15 = 17.36 h; V = 0.015 × 17.36 × 3600 × 30 = 28 123.2 m³
+  const r = S.calcular(p, { nivel: 4.4, bomba: true, t: 6 * 3600 });
+  cerca(r.horasDia, 17.36, 1e-9);
+  cerca(r.Vmes, 28123.2, 1e-6);
+  // Altura media con el nivel medio (3 + 4.75)/2 = 3.875 m: H̄ = 38 + 3.875 − 2.5 + h_f
+  cerca(r.nivelMedio, 3.875, 1e-12);
+  cerca(r.Hmedia, 38 + 3.875 - 2.5 + r.hfBombeo, 1e-9);
+  cerca(r.hfBombeo, r.succion.hfReal + r.aduccion.hfReal, 1e-12);
+  // C = m·V + b con m = 950·997.05·9.81·H̄/(0.7·η_m·3.6e6): se paga la energía eléctrica;
+  // el motor de la bomba (15 HP, 2 polos) tiene η_m = 0.91
+  assert.equal(r.bombas.acueducto.motor.hp, 15);
+  cerca(r.etaMotor, 0.91, 1e-12);
+  const m = (950 * 997.05 * 9.81 * r.Hmedia) / (0.7 * 0.91 * 3.6e6);
+  cerca(r.costo.costo, m * 28123.2 + 150000, 1e-6);
+  assert.equal(Math.round(r.costo.costo), 5006231);
+  // Sin el motor (η_m = 1) queda el costo de antes, con solo la eficiencia de la bomba
+  cerca(D.costoMensual(p, r.hfBombeo).costo.costo, ((950 * 997.05 * 9.81 * r.Hmedia) / (0.7 * 3.6e6)) * 28123.2 + 150000, 1e-6);
+  // Con bombeo continuo trabaja 24 h y el tanque se mantiene lleno
+  const c = D.costoMensual({ ...p, controlBomba: 'continuo' }, r.hfBombeo);
+  cerca(c.horasDia, 24, 1e-12);
+  cerca(c.nivelMedio, p.hMax, 1e-12);
+  // Si la bomba no alcanza el QMD, trabaja 24 h y el tanque termina vacío
+  const sin = D.costoMensual({ ...p, Qbombeo: 8 }, r.hfBombeo);
+  assert.equal(sin.alcanza, false);
+  cerca(sin.horasDia, 24, 1e-12);
+  assert.equal(sin.nivelMedio, 0);
+});
+
+test('Energía de ciclos completos = estimación mensual del costo', () => {
+  const p = { ...base(), curvaDemanda: 'constante' };
+  const hf = S.calcular(p, { nivel: 4.4, bomba: true, t: 0 }).hfBombeo;
+  const ci = D.cicloBomba(p);
+  // Tres ciclos desde el arranque, en pasos de 10 min
+  let st = { nivel: p.nivelArranque, bomba: true, t: 0 };
+  let E = 0;
+  let tBomba = 0;
+  let eventos = 0;
+  for (let resto = 3 * ci.ciclo; resto > 1e-6; resto -= 600) {
+    const s = D.avanzarTanque(p, st, Math.min(600, resto));
+    E += D.energiaTramo(p, s.tBomba, s.areaNivel, hf, 0.91);
+    tBomba += s.tBomba;
+    eventos += s.eventos.length;
+    st = s;
+  }
+  cerca(tBomba, 3 * ci.tLlenado, 1e-3);
+  assert.equal(eventos, 6);                         // tres paradas y tres arranques
+  cerca((E / (3 * ci.ciclo)) * 30 * 86400, D.costoMensual(p, hf, 0.91).costo.energia, 1e-3);
+});
+
+test('Tanque: los cambios de la bomba se registran con su instante exacto', () => {
+  const p = { ...base(), curvaDemanda: 'constante' };
+  const A = M.areaTanque(p.Dtanque);
+  // De 4.40 m a la parada (4.75 m) con (Qb − QMD)/A: t = 0.35·A/0.00415 = 9 538.4 s
+  const s = D.avanzarTanque(p, { nivel: 4.4, bomba: true, t: 0 }, 4 * 3600);
+  cerca(s.eventos[0].t, (0.35 * A) / 0.00415, 1e-6);
+  assert.equal(s.eventos[0].bomba, false);
+  cerca(s.eventos[0].nivel, 4.75, 1e-9);
+});
+
+test('Golpe de ariete (Joukowsky): ΔH = a·V/g', () => {
+  const e = D.especTubo('pvc', 'RDE 21', '6"');
+  const a = D.celeridad(e);
+  const esperado = Math.sqrt(D.K_AGUA / M.RHO) / Math.sqrt(1 + (D.K_AGUA * e.DI) / (e.E * e.e));
+  cerca(a, esperado, 1e-9);
+  assert.ok(a > 250 && a < 500);                 // PVC: tubería flexible, celeridad baja
+  cerca(D.golpeAriete(1, e).dH, a / M.G, 1e-9);
+  // El hierro dúctil es más rígido: más celeridad
+  assert.ok(D.celeridad(D.especTubo('hd', 'C40', 'DN 150')) > a);
+});
+
+test('Red ramificada: continuidad de caudales y presiones', () => {
+  const p = base();
+  const q = D.caudalesDiseno(D.caudalMedioVivienda(p.habitantes, p.dotacion, p.perdidas), p.k1, p.k2).QMH;
+  const red = D.calcularRed(p, 40, 42, q);
+  assert.equal(red.casas.length, p.nRamales * p.nViviendas);
+  cerca(red.Qred, red.casas.reduce((a, c) => a + c.q, 0), 1e-12);    // entra lo que consumen
+  const primero = red.tramos.find((t) => t.tipo === 'principal');
+  cerca(primero.Q, red.Qred, 1e-12);
+  for (const c of red.casas) cerca(c.presion, c.Hn - c.cota, 1e-9);  // p/γ = H − z
+  assert.ok(red.casas.every((c) => c.presion >= red.critica.presion - 1e-12));
+  // La energía solo baja aguas abajo
+  assert.ok(red.casas.every((c) => c.Hn <= 40 + 1e-9));
+});
+
+test('Red: con un ramal cerrado sus viviendas quedan sin agua y baja el caudal', () => {
+  const p = base();
+  const q = 0.000018;
+  const abierta = D.calcularRed(p, 40, 42, q);
+  const cerrada = D.calcularRed({ ...p, ramalCerrado: 2 }, 40, 42, q);
+  assert.ok(cerrada.casas.filter((c) => c.j === 2).every((c) => c.cerrada));
+  assert.ok(cerrada.Qred < abierta.Qred);
+});
+
+test('Acometida: más carga en la red da más caudal en el grifo', () => {
+  const p = base();
+  const e = D.especTubo('pead', 'SDR 9', '20 mm');
+  const g1 = D.grifoConAcometida(p, 30, 13, e, 'darcy');
+  const g2 = D.grifoConAcometida(p, 40, 13, e, 'darcy');
+  assert.ok(g2.q > g1.q && g1.q > 0);
+  // Balance de energía: Hn − pérdidas = carga en el grifo
+  cerca(g1.H, 30 - 13 - g1.hf - g1.hm - g1.hl, 0.01);
+});
+
+test('Sistema completo con los valores iniciales: todas las revisiones cumplen', () => {
+  const p = base();
+  const r = S.calcular(p, { nivel: 4.4, bomba: true, t: 7 * 3600 });
+  const fallan = r.checks.filter((c) => c.nivel === 'alerta').map((c) => c.texto);
+  assert.deepEqual(fallan, []);
+  assert.ok(r.redDiseno.presionMin >= p.presionMinima);
+  assert.ok(r.aduccion.V >= p.Vmin && r.aduccion.V <= p.Vmax);
+});
