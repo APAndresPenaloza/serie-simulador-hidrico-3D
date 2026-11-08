@@ -6,7 +6,7 @@ Es el cuarto eslabón de la serie de simuladores hídricos 3D: recibe uno de los
 
 La escena 3D muestra la ciénaga con su anillo de manglar, la barra de arena con la carretera, sus puentes y sus alcantarillas, el mar, la Boca de la Barra con el pueblo de Ciénaga, el río Magdalena entre sus diques naturales con los caños que lo comunican con la ciénaga, los ríos de la Sierra y el pueblo de palafitos con sus canoas. El color del agua sigue a la salinidad (dulce, salobre, marina o hipersalina) y a las algas; cada mangle se colorea con el estrés de su especie; con la mortandad aparecen peces muertos. Tiene cuatro vistas (Ciénaga, Caños, Boca y Palafitos).
 
-El panel tiene nueve pestañas, en dos filas: Ríos y caños, Ciénaga, Mar y boca, Salinidad, Manglar y pesca, Calidad, Sedimentos, Datos y Conexión.
+El panel tiene nueve pestañas (en dos filas, o en más si los nombres no caben en el ancho del panel): Ríos y caños, Ciénaga, Mar y boca, Salinidad, Manglar y pesca, Calidad, Sedimentos, Datos y Conexión.
 
 Proyecto de Álgebra y Geometría Analítica, 2026-II. Serie de simuladores hídricos 3D (línea de investigación: Hidrodinámica y Calidad del Agua de Lagunas Costeras).
 

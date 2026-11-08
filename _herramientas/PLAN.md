@@ -57,3 +57,9 @@ matemático (forma general + sustitución), 1–2 gráficas con el punto actual.
 - _nucleo/tests/datos.test.js es una plantilla: se copia a cada proyecto (allí sí corre); en _nucleo no tiene sistema.js.
 - Skill «simulador-hidrico-3d-serie» propuesta (crear, documentar, revisar y conectar simuladores de la serie).
 - Entrega: un .zip por proyecto y el .zip de la serie completa.
+- Ríos exorreicos conectado (2026-11-08): pestaña Conexión propia en js/app.js (no usa el núcleo), js/nodo.js
+  (salida a la ciénaga; entrada del lago: Qlago, Plago, SSlago entran por la cabecera como el dQ de la represa) y
+  js/conexion.js (COPIA del núcleo: si cambia el contrato, copiarla a mano). 104 pruebas (6 de conexión).
+- Pestañas: dos filas o más si los nombres no caben (ajustarPestanas en app-base.js y en el app.js del río); el punto
+  de alerta va en posición absoluta y no cambia el ancho. Antes, en Océanos y en el Sistema conectado la pestaña
+  Conexión quedaba escondida detrás de un desplazamiento horizontal sin barra.

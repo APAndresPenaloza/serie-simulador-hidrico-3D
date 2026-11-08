@@ -6,7 +6,7 @@ Es el sexto eslabón de la serie de simuladores hídricos 3D: recibe del delta l
 
 La escena 3D muestra la bahía entre dos cabos rocosos, la playa con sus parasoles (tantos como la ocupación), el malecón con palmeras, los edificios y los cerros detrás; las crestas de las olas, que se tuercen al acercarse hasta llegar paralelas a la orilla y se vuelven espuma en la rompiente; la espuma que sube y baja por la arena con el remonte; la torre del salvavidas con su bandera (verde, amarilla, roja o morada si el agua está contaminada); el emisario submarino con su pluma, que se aclara camino a la playa; el espolón y la draga del relleno cuando están activos, y el agua sobre el malecón si el nivel total lo pasa. Tiene cuatro vistas (Playa, Rompiente, Perfil y Emisario). En la vista Perfil la mitad oriental se recorta y se ve el corte de la playa con la berma, el perfil de equilibrio, la rompiente y la profundidad de cierre.
 
-El panel tiene nueve pestañas, en dos filas: Oleaje, Rompiente, Marea y nivel, Perfil de playa, Arena de la playa, Ascenso del mar, Agua de baño, Datos y Conexión.
+El panel tiene nueve pestañas (en dos filas, o en más si los nombres no caben en el ancho del panel): Oleaje, Rompiente, Marea y nivel, Perfil de playa, Arena de la playa, Ascenso del mar, Agua de baño, Datos y Conexión.
 
 Proyecto de Álgebra y Geometría Analítica, 2026-II. Serie de simuladores hídricos 3D (línea de investigación: Ingeniería de Costas y Calidad del Agua de Playas).
 
