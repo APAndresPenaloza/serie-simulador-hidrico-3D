@@ -6,7 +6,7 @@ Es el quinto eslabón de la serie de simuladores hídricos 3D: recibe de la cié
 
 La escena 3D muestra el río que baja del sur y sale al mar entre dos tajamares con sus faros, la ciudad y el puerto con sus grúas y buques en la orilla occidental, la bocatoma del acueducto, la draga, el Canal del Dique con su compuerta, la llanura del delta con su manglar y la ciénaga al oriente, la pluma café que se aclara mar adentro con la misma exponencial del modelo, las crestas de las olas que llegan en ángulo a la costa y la línea del frente del delta dentro de 50 años (blanca si avanza, roja si retrocede). Tiene cuatro vistas (Delta, Boca, Corte y Brazos). En la vista Corte la mitad oriental se recorta como una maqueta y se ve, a lo largo del canal, la cuña salina metida por debajo del agua del río. Si el canal no alcanza el calado, el buque espera afuera.
 
-El panel tiene nueve pestañas, en dos filas: Río y sedimento, Brazos del delta, Cuña salina, Pluma, Avance del delta, Oleaje, Canal y dragado, Datos y Conexión.
+El panel tiene nueve pestañas (en dos filas, o en más si los nombres no caben en el ancho del panel): Río y sedimento, Brazos del delta, Cuña salina, Pluma, Avance del delta, Oleaje, Canal y dragado, Datos y Conexión.
 
 Proyecto de Álgebra y Geometría Analítica, 2026-II. Serie de simuladores hídricos 3D (línea de investigación: Hidráulica Fluvial y Morfodinámica de Deltas).
 
