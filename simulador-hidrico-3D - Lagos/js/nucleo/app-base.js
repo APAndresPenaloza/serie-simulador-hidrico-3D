@@ -137,6 +137,21 @@ export function iniciarSimulador(def) {
   const todas = [...def.tabs, { id: 'datos', nombre: 'Datos', especial: 'datos' }, { id: 'conexion', nombre: 'Conexión', especial: 'conexion' }];
   elPestanas.style.setProperty('--columnas', Math.ceil(todas.length / 2));
 
+  /**
+   * Las pestañas van en dos filas; si sus nombres no caben en el ancho del panel se agrega
+   * una fila más, hasta que quepan todas (ninguna queda escondida, ni la de Conexión). El
+   * punto de alerta no ocupa ancho (va sobre el nombre), así que no cambia la medida.
+   */
+  function ajustarPestanas() {
+    const ancho = elPestanas.clientWidth;
+    if (!ancho) return;
+    const n = todas.length;
+    for (let filas = 2; filas <= n; filas++) {
+      elPestanas.style.setProperty('--columnas', Math.ceil(n / filas));
+      if (elPestanas.scrollWidth <= ancho + 1) break;
+    }
+  }
+
   const valorMax = (c) => (typeof c.max === 'function' ? c.max(p, r) : c.max);
   const valorMin = (c) => (typeof c.min === 'function' ? c.min(p, r) : c.min);
   function leerControl(c) {
@@ -239,7 +254,7 @@ export function iniciarSimulador(def) {
       b.setAttribute('role', 'tab');
       b.setAttribute('aria-controls', `ficha-${t.id}`);
       b.dataset.tab = t.id;
-      b.innerHTML = `${t.nombre}<span class="alerta-mini" hidden></span>`;
+      b.innerHTML = `<span class="nombre">${t.nombre}<span class="alerta-mini" hidden></span></span>`;
       b.addEventListener('click', () => mostrarTab(t.id));
       elPestanas.appendChild(b);
 
@@ -755,6 +770,9 @@ export function iniciarSimulador(def) {
 
   // ── Arranque ───────────────────────────────────────────────────────────
   crearPanel();
+  ajustarPestanas();
+  window.addEventListener('resize', ajustarPestanas);
+  document.fonts?.ready?.then(ajustarPestanas);
   crearVistas();
   if (def.Escena) {
     const cont = document.getElementById('escena');

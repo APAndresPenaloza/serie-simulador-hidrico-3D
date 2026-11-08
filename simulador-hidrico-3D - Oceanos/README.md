@@ -6,7 +6,7 @@ Es el séptimo eslabón de la serie de simuladores hídricos 3D: recibe del delt
 
 La escena 3D es esquemática: la superficie del mar se mueve con tres trenes de olas que empujan los alisios y su color sigue a la temperatura (más clara y fría junto a la costa cuando aflora el agua del fondo); hay flechas del viento y del transporte de Ekman, la costa con el mareógrafo (que marca la marea y el ascenso del mar), los molinos de La Guajira, la boya oceanográfica, un buque, la boca del río con su pluma y el arrecife de coral, que se blanquea con el calor acumulado. Tiene cuatro vistas (Mar, Columna, La Guajira y Arrecife). En la vista Columna la mitad oriental se recorta y se ve la columna de agua coloreada por la temperatura, con la termoclina, las flechas de la espiral de Ekman a varias profundidades y la celda del afloramiento.
 
-El panel tiene nueve pestañas, en dos filas: Olas, Mareas, Viento y corrientes, Temperatura y coral, Salinidad y densidad, Nivel del mar, Carbono y acidez, Datos y Conexión.
+El panel tiene nueve pestañas (en dos filas, o en más si los nombres no caben en el ancho del panel): Olas, Mareas, Viento y corrientes, Temperatura y coral, Salinidad y densidad, Nivel del mar, Carbono y acidez, Datos y Conexión.
 
 Proyecto de Álgebra y Geometría Analítica, 2026-II. Serie de simuladores hídricos 3D (línea de investigación: Oceanografía Física y Cambio Climático en el Caribe).
 

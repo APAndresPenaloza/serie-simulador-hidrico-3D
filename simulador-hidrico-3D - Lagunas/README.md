@@ -6,7 +6,7 @@ Es el primer eslabón de la serie de simuladores hídricos 3D que sigue el agua 
 
 La escena 3D muestra un circo glaciar con el glaciar en el pico, las laderas con frailejones, potreros y papa, la laguna en su cubeta, el vertedero, la quebrada que baja hasta el pueblo y la toma del acueducto veredal. Tiene cinco vistas (Páramo, Laguna, Glaciar, Corte y Quebrada); al cambiar de pestaña, la cámara va sola a la vista que corresponde. En la vista Corte el frente del terreno se recorta como una maqueta y se ven la luz que entra en el agua, las plantas del fondo y el lodo.
 
-El panel tiene nueve pestañas, en dos filas: Clima, Páramo, Laguna, Calidad, Viento, Sedimentos, Amenazas, Datos y Conexión. En la barra de arriba, el primer indicador es el nivel de alerta.
+El panel tiene nueve pestañas (en dos filas, o en más si los nombres no caben en el ancho del panel): Clima, Páramo, Laguna, Calidad, Viento, Sedimentos, Amenazas, Datos y Conexión. En la barra de arriba, el primer indicador es el nivel de alerta.
 
 Proyecto de Álgebra y Geometría Analítica, 2026-II. Serie de simuladores hídricos 3D (línea de investigación: Limnología e Hidrología de Alta Montaña).
 

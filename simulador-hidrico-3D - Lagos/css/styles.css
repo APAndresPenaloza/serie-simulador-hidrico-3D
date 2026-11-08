@@ -271,7 +271,7 @@ body {
 .pestanas {
   position: sticky; top: 0; z-index: 2;
   display: grid;
-  grid-template-columns: repeat(var(--columnas, 7), 1fr);   /* las pestañas en dos filas */
+  grid-template-columns: repeat(var(--columnas, 7), 1fr);   /* dos filas, o más si los nombres no caben (app-base.js) */
   padding: 0 4px;
   flex-shrink: 0;   /* con overflow, un hijo de flex se podría encoger hasta 0 */
   overflow-x: auto;
@@ -294,9 +294,12 @@ body {
 .pestana:hover { color: var(--tinta); }
 .pestana[aria-selected="true"] { color: var(--tinta); border-bottom-color: var(--agua); }
 .pestana .alerta-mini[hidden] { display: none; }
+.pestana .nombre { position: relative; }
+/* El punto de alerta va arriba, junto al nombre, sin ocupar ancho: no cambia las filas */
 .pestana .alerta-mini {
-  display: inline-block; width: 6px; height: 6px; border-radius: 50%;
-  background: var(--alerta); margin-left: 4px; vertical-align: 2px;
+  position: absolute; top: 0; left: calc(100% + 1px);
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--alerta);
 }
 
 .ficha { padding: 16px 20px 8px; }
