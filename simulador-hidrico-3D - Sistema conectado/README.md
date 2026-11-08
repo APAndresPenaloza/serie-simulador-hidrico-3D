@@ -4,11 +4,11 @@ Aplicación web interactiva que conecta los siete proyectos de la serie de simul
 
 No repite los modelos: importa los de cada proyecto desde su carpeta y los compone en el orden de la red. Lo que sale de un simulador (su «frontera») es lo que le entra al siguiente. La laguna, el lago y el río forman una cadena simple (composición de funciones); la ciénaga, el delta y el océano se reciben datos unos a otros, y ese lazo se resuelve con una iteración de punto fijo. Al final se resuelve un sistema de ecuaciones lineales para saber de dónde viene el agua de cada cuerpo (trazadores).
 
-El simulador de ríos (el proyecto de referencia de la serie) no se modifica: un adaptador (`js/nodos/rios.js`) usa sus funciones puras (`lluvia.js` y `rio.js`) para armar su frontera.
+El simulador de ríos (el proyecto de referencia de la serie) conserva su propio modelo: un adaptador (`js/nodos/rios.js`) usa sus funciones puras (`lluvia.js` y `rio.js`) para armar su frontera con el año mes a mes. El río también tiene su pestaña Conexión: si está abierto en el mismo navegador y publica su frontera, al marcar aquí «Aplicar en vivo» el sistema usa la del simulador abierto.
 
 La escena 3D es una maqueta esquemática de la región con el norte hacia el mar: la Sierra Nevada con su glaciar, la laguna del páramo y el lago; el río que baja a la ciénaga con su manglar y su barra de arena; el río grande con sus caños, su delta y su pluma de lodo; la playa de la bahía con la ciudad; y el mar Caribe con el oleaje, un buque y una boya. Cada día del reloj cambian los caudales, la sal de la ciénaga, las plumas, el oleaje y el nivel del mar. Tiene cuatro vistas (Red, Sierra, Costa y Mar).
 
-El panel tiene ocho pestañas, en dos filas: Red del agua, Caudal y tiempo, Calidad y trazadores, Sedimento, El mar y la costa, Clima y horizonte, Datos y Conexión.
+El panel tiene ocho pestañas (en dos filas, o en más si los nombres no caben en el ancho del panel): Red del agua, Caudal y tiempo, Calidad y trazadores, Sedimento, El mar y la costa, Clima y horizonte, Datos y Conexión.
 
 Proyecto de Álgebra y Geometría Analítica, 2026-II. Serie de simuladores hídricos 3D.
 

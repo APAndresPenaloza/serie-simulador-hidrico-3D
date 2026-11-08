@@ -68,6 +68,8 @@ export const PARAMETROS_DISENO = Object.freeze({
   lluvia: 'normal',               // escenario que fija la cota del río, el sedimento, el clima y la tormenta
   sedimento: 150,                 // mg/L de sólidos en suspensión
   vertTipo: 'tratada', vertZona: 'media', Qvert: 20,   // L/s
+  // Lago de aguas arriba: lo fija la frontera del lago en la pestaña Conexión (0 = sin lago)
+  Qlago: 0, Plago: 0, SSlago: 2,  // m³/s, µg/L, mg/L
   // Acuífero (zona del corte) y pozo de una finca
   zonaAcuifero: 'baja',
   sueloAcuifero: 'arena', tipoAcuifero: 'semiconfinado', profFreatico: 2,   // m
@@ -135,8 +137,11 @@ export function calcular(p, estado) {
   // el río natural (sin represa).
   const Qnat = R.caudalRio(p.cotaRio).Q;
   const represa = P.calcularRepresa(p, Qnat, estado.nivelEmbalse ?? p.nivelEmbalse);
-  p = Math.abs(represa.dQ) > 1e-9
-    ? { ...p, cotaRioNatural: p.cotaRio, cotaRio: R.cotaDeCaudal(Math.max(1e-4, Qnat + represa.dQ)), dQrepresa: represa.dQ }
+  // Agua del lago de aguas arriba (frontera de la serie, pestaña Conexión): entra por la
+  // cabecera y recorre todo el río, como lo que la represa suelta de más.
+  const Qlago = Math.max(0, p.Qlago ?? 0);
+  p = Math.abs(represa.dQ) > 1e-9 || Qlago > 0
+    ? { ...p, cotaRioNatural: p.cotaRio, cotaRio: R.cotaDeCaudal(Math.max(1e-4, Qnat + represa.dQ + Qlago)), dQrepresa: represa.dQ }
     : { ...p, cotaRioNatural: p.cotaRio, dQrepresa: 0 };
   const e = sincronizarTubos(p);
   const { nivel } = estado;

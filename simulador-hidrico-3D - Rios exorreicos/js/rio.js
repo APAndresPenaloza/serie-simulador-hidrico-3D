@@ -392,8 +392,9 @@ export function aguaRecarga(puntos, zona = 'baja') {
 }
 
 export function calcularRio(p, sed = null) {
-  // p.cotaRio ya incluye el efecto de la represa; dQ es lo que ella suelta de más (o guarda)
-  const dQ = p.dQrepresa ?? 0;
+  // p.cotaRio ya incluye el efecto de la represa y del lago; dQ es lo que la represa suelta de
+  // más (o guarda) más el agua del lago, que llega por la cabecera y pasa por las tres zonas
+  const dQ = (p.dQrepresa ?? 0) + Math.max(0, p.Qlago ?? 0);
   const boc = caudalRio(p.cotaRio);
   const capta = captaAgua(p.cotaRio);
   const calidad = perfilCalidad(p, Math.max(0, boc.Q - dQ), dQ);

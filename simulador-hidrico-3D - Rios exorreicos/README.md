@@ -8,7 +8,7 @@ Además del acueducto, el simulador modela la cuenca. La lluvia lo mueve todo: l
 
 La escena 3D va del nacimiento del río al mar y tiene cinco vistas (Ciudad, Cuenca, Represa, Cultivo y Acuífero); al cambiar de pestaña, la cámara va sola a la vista que corresponde.
 
-El panel tiene catorce pestañas, en dos filas: Lluvia, Río, Represa, Captación, Bombas, Tuberías, Tanque, Red, Vivienda, Riego, Huella, Acuífero, Arroyo y Datos. En la barra de arriba, el primer indicador es el nivel de alerta por la lluvia.
+El panel tiene quince pestañas: Lluvia, Río, Represa, Captación, Bombas, Tuberías, Tanque, Red, Vivienda, Riego, Huella, Acuífero, Arroyo, Datos y Conexión. Van en dos filas o en más si los nombres no caben en el ancho del panel (ninguna queda escondida). En la barra de arriba, el primer indicador es el nivel de alerta por la lluvia.
 
 Proyecto final de Álgebra y Geometría Analítica, 2026-II. Línea de investigación: Hidráulica de Canales Abiertos y Redes de Acueducto.
 
@@ -32,7 +32,9 @@ js/huella.js          Huella hídrica verde, azul y gris de los cultivos, CO₂ 
 js/reynolds.js        Animación del experimento de Reynolds (laminar, transición, turbulento)
 js/datos.js           Registro de la simulación, escenarios y armado del libro de Excel
 js/excel.js           Escritor de archivos .xlsx (XML + ZIP con compresión DEFLATE), sin librerías
-js/app.js             Controles, tiempo simulado, métricas, plano de la red, ecuaciones y pestaña Datos
+js/app.js             Controles, tiempo simulado, métricas, plano de la red, ecuaciones y pestañas Datos y Conexión
+js/nodo.js            El río como eslabón de la serie: lo que entrega a la ciénaga y cómo recibe el agua del lago
+js/conexion.js        Contrato de frontera de la serie (versión 1) y enlace en vivo; copia de _nucleo/js/nucleo/conexion.js
 lib/                  Three.js 0.170 y Chart.js 4.4 (copias locales, licencia MIT)
 tests/modelo.test.js  Pruebas del modelo con valores calculados a mano
 tests/diseno.test.js  Pruebas del diseño (catálogo, demanda, bomba, costo mensual, red, sistema completo)
@@ -44,6 +46,7 @@ tests/acuifero.test.js Pruebas del agua subterránea (capas, Darcy, Thiem, tiemp
 tests/represa.test.js Pruebas de la represa (embalse, operación, central, línea, límites, año mes a mes, costos)
 tests/huella.test.js  Pruebas de la huella hídrica, del carbono del transporte y de la inundación del lote
 tests/lluvia.test.js  Pruebas de la lluvia (lluvia–caudal, El Niño y La Niña, curva IDF, arroyo, deslizamientos, avenida, alertas)
+tests/conexion.test.js Pruebas de la conexión con la serie (frontera de salida, agua del lago, mezcla, red)
 ```
 
 Las librerías van incluidas en `lib/` y el Excel se genera con código propio, así que el simulador no depende de ningún CDN.
@@ -198,6 +201,26 @@ Mientras corre el reloj se guarda una fila cada 15 minutos de tiempo simulado (s
 
 Los números se guardan con todos sus decimales; el formato de cada celda solo decide cuántos se ven. Los textos largos (material de una tubería, ecuación de fricción, criterios de diseño) se parten en líneas dentro de su celda, y al imprimir las hojas anchas salen en horizontal, ajustadas al ancho de la página. El archivo se arma en el navegador con `js/excel.js` (sin librerías ni conexión a internet).
 
+## Pestaña Conexión: el río dentro de la serie
+
+El río es el tercer eslabón de la serie «Simulador hídrico 3D» (del páramo al océano): **recibe del lago** el agua que desagua y **entrega a la ciénaga** lo que sale por la desembocadura. La pestaña Conexión muestra la red de la serie, la frontera de salida y la de entrada, y conecta el río de tres formas:
+
+- **Archivo de frontera (.json).** «Exportar frontera» descarga `frontera-rios_AAAA-MM-DD_HH-MM.json` para importarlo en el simulador de ciénagas o en el Sistema conectado; «Importar frontera…» aplica al río la frontera que exporta el simulador de lagos (las de otros proyectos se rechazan con un aviso).
+- **En vivo.** Con todos los proyectos servidos desde la misma carpeta (`python -m http.server 8000`) y abiertos en el mismo navegador, el río publica su frontera cada vez que cambia y cada 2 s («Publicar la frontera de salida», marcada por defecto). En el Sistema conectado o en Ciénagas se marca «Aplicar en vivo» y el río llega solo; en el río se marca «Aplicar en vivo» para que el lago lo alimente.
+- **Sistema conectado.** Aunque el río no esté abierto, el Sistema conectado usa el modelo del río (con promedios mensuales) como un eslabón de la red; si recibe la frontera del río, usa la del simulador abierto.
+
+| Frontera de salida (km 50) | Cómo se calcula |
+|---|---|
+| Caudal | Río en la zona baja (con la represa y el lago) más el vertimiento |
+| Sedimento | Sedimento de la lluvia mezclado con el del lago: C = (Q₁C₁ + Q₂C₂)/(Q₁ + Q₂) |
+| Temperatura | Temperatura del agua de la zona baja |
+| Oxígeno disuelto, DBO, coliformes y nitrógeno | Final del perfil de Streeter-Phelps (desembocadura) |
+| Fósforo total | Mezcla de la escorrentía de la cuenca (40 µg/L), el lago y el vertimiento (valores de referencia: el simulador no modela el fósforo) |
+
+El agua del lago (Q_lago) entra por la cabecera (km 0) y recorre todo el río, igual que lo que la represa suelta de más: sube el caudal de las tres zonas, la cota de la lámina en la bocatoma (curva de descarga) y diluye el vertimiento. Sin frontera del lago, Q_lago = 0 y el río es el del proyecto original. La pestaña Río muestra el agua del lago y la cota con el lago, y el libro de Excel guarda lo que recibe del lago y lo que entrega a la ciénaga. «Reiniciar» conserva la frontera aplicada; «Quitar la frontera recibida» la retira.
+
+`js/conexion.js` es una copia del módulo común de la serie (`_nucleo/js/nucleo/conexion.js`); si el contrato cambia, hay que copiarlo de nuevo a esta carpeta (este proyecto no se sincroniza con `sincronizar.mjs` porque no usa el núcleo).
+
 ## Tuberías por material
 
 Cada tramo (succión, aducción, conducción, principal, ramales, acometida y tubería de riego) se elige por material, diámetro nominal y clase de presión. El catálogo (`MATERIALES`, `especTubo`) da diámetro externo, espesor, diámetro interno, presión de trabajo, rugosidad, coeficiente C y módulo de elasticidad.
@@ -245,7 +268,7 @@ y abrir `http://localhost:8000`. Para correr las pruebas (requiere Node.js 18 o 
 npm test
 ```
 
-Son 98 pruebas: 21 del modelo base, 17 del diseño, 7 del archivo de Excel, 9 del río, 6 de las bombas, 6 del riego, 7 del acuífero, 8 de la represa, 7 de la huella y 10 de la lluvia.
+Son 104 pruebas: 21 del modelo base, 17 del diseño, 7 del archivo de Excel, 9 del río, 6 de las bombas, 6 del riego, 7 del acuífero, 8 de la represa, 7 de la huella, 10 de la lluvia y 6 de la conexión con la serie.
 
 ## Valores de referencia
 

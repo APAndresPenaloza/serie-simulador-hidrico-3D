@@ -16,6 +16,8 @@ import { Escena } from './escena3d.js';
 import { crearGrafica, actualizarGrafica, serieLinea, seriePuntos, paleta } from './graficas.js';
 import { ExperimentoReynolds } from './reynolds.js';
 import { Registro, INTERVALOS, relojSimulado, crearLibro, nombreArchivo, descargarArchivo, libroRepresa, libroAno, libroHuella, libroCultivos, libroLluvia, libroLluviaMeses } from './datos.js';
+import * as N from './nodo.js';
+import { crearFrontera, textoFrontera, nombreFrontera, leerArchivo, EnlaceVivo, PROYECTOS, RED, MAGNITUDES, nombreProyecto, recibeDe } from './conexion.js';
 
 // ── Estado ────────────────────────────────────────────────────────────────
 const NIVEL_INICIAL = 4.4;
@@ -77,6 +79,7 @@ const TABS = [
   { id: 'acuifero', nombre: 'Acuífero', extra: true, revision: true, corte: true, intro: 'Bajo el valle hay agua subterránea: llena los poros de una capa de arena o grava (el acuífero) y se mueve muy despacio. En la montaña es un aluvión delgado de grava en el fondo del valle; en el piedemonte, un abanico de arena gruesa y grava; en la llanura, una capa de arena bajo arcilla. Según el nivel del río, el río le entrega agua al acuífero o el acuífero alimenta al río. Un pozo que bombea baja el nivel a su alrededor (cono de abatimiento) y, si el cono alcanza el río, atrae su agua: con ella pueden llegar los contaminantes. Aquí se eligen la zona, las capas del terreno y el pozo; en la escena, la vista Acuífero muestra el corte del terreno de esa zona con el agua subterránea en movimiento.' },
   { id: 'arroyo', nombre: 'Arroyo', intro: 'Con los aguaceros los arroyos de la ciudad crecen de golpe. El canal trapezoidal, excavado por debajo de la calle, tiene que conducir la crecida sin desbordarse.' },
   { id: 'datos', nombre: 'Datos', datos: true, intro: 'Guarda la información de la simulación en un libro de Excel: los parámetros y resultados, la serie de tiempo que se registra mientras corre el reloj, los arranques y paradas de la bomba, la revisión del diseño, las cantidades de obra y los escenarios que guardes para compararlos.' },
+  { id: 'conexion', nombre: 'Conexión', conexion: true, intro: 'Este simulador es parte de una serie que sigue el agua del páramo al océano. Aquí se ve lo que el río entrega a la ciénaga por su desembocadura (su <b>frontera de salida</b>) y se aplica lo que le llega del lago de aguas arriba. Se conecta de tres formas: con un archivo de frontera (.json), en vivo con otro simulador abierto en el mismo navegador, o con el proyecto <b>Sistema conectado</b>, que une todos los modelos.' },
 ];
 
 const ESTADOS_SERVICIO = {
@@ -178,7 +181,10 @@ function textoCotaRio(v) {
   const capta = R.captaAgua(cotaEf())
     ? `Lámina sobre la rejilla de la bocatoma: ${fmt(cotaEf() - R.REJILLA.fondo)} m (capta desde la cota ${fmt(R.COTA_MIN_CAPTACION)} m)`
     : `Por debajo de la cota ${fmt(R.COTA_MIN_CAPTACION)} m la bocatoma no capta y la bomba se detiene`;
-  const represa = Math.abs(cotaEf() - v) > 0.005 ? `Con la represa el río queda a la cota ${fmt(cotaEf())} m. ` : '';
+  const conLago = (p.Qlago ?? 0) > 0;
+  const conRepresa = Math.abs(r.represa?.dQ ?? 0) > 1e-9;
+  const quien = conLago ? (conRepresa ? 'Con la represa y el agua del lago' : 'Con el agua del lago') : 'Con la represa';
+  const represa = Math.abs(cotaEf() - v) > 0.005 ? `${quien} el río queda a la cota ${fmt(cotaEf())} m. ` : '';
   const vega = cotaEf() > H.COTA_VEGA ? ` El río se sale a la vega: ${fmt(cotaEf() - H.COTA_VEGA)} m de agua sobre el lote de la zona baja.` : '';
   return `${represa}${capta}.${vega}`;
 }
@@ -498,6 +504,20 @@ const elFichas = document.getElementById('fichas');
 const fichas = {};
 const graficas = {};
 
+/**
+ * Las pestañas van en dos filas; si sus nombres no caben en el ancho del panel se agrega
+ * una fila más, hasta que quepan todas (ninguna queda escondida, ni la de Conexión). El
+ * punto de alerta no ocupa ancho (va sobre el nombre), así que no cambia la medida.
+ */
+function ajustarPestanas() {
+  const ancho = elPestanas.clientWidth;
+  if (!ancho) return;
+  for (let filas = 2; filas <= TABS.length; filas++) {
+    elPestanas.style.setProperty('--columnas', Math.ceil(TABS.length / filas));
+    if (elPestanas.scrollWidth <= ancho + 1) break;
+  }
+}
+
 function crearPanel() {
   for (const t of TABS) {
     const b = document.createElement('button');
@@ -507,7 +527,7 @@ function crearPanel() {
     b.setAttribute('role', 'tab');
     b.setAttribute('aria-controls', `ficha-${t.id}`);
     b.dataset.tab = t.id;
-    b.innerHTML = `${t.nombre}<span class="alerta-mini" hidden></span>`;
+    b.innerHTML = `<span class="nombre">${t.nombre}<span class="alerta-mini" hidden></span></span>`;
     b.addEventListener('click', () => mostrarTab(t.id));
     elPestanas.appendChild(b);
 
@@ -518,6 +538,10 @@ function crearPanel() {
     f.setAttribute('aria-labelledby', b.id);
     if (t.datos) {
       crearFichaDatos(t, f);
+      continue;
+    }
+    if (t.conexion) {
+      crearFichaConexion(t, f);
       continue;
     }
     f.innerHTML = `
@@ -769,6 +793,7 @@ function cambio(origen) {
   sincronizarControles(origen);
   pintarPanel();
   actualizarEscena();
+  publicarEnVivo();
 }
 
 /** La escena dibuja el río con la represa: recibe la cota efectiva en la bocatoma. */
@@ -1075,7 +1100,8 @@ function tablaZonasRio() {
     ['Altitud', ...ids.map((id) => `${R.miles(R.ZONAS[id].elevacion)} m`)],
     ['Temperatura del agua', ...ids.map((id) => `${R.ZONAS[id].Tagua} °C`)],
     ...(Math.abs(r.represa.dQ) > 1e-9 ? [['Caudal sin la represa', ...ids.map((id) => `${fmt(r.represa.zonas[id].natural)} m³/s`)]] : []),
-    [Math.abs(r.represa.dQ) > 1e-9 ? 'Caudal con la represa' : 'Caudal', ...ids.map((id) => `${fmt(cal.hid[id].Q)} m³/s`)],
+    ...(p.Qlago > 0 ? [['Agua del lago (por la cabecera)', ...ids.map(() => `${fmt(p.Qlago)} m³/s`)]] : []),
+    [Math.abs(r.represa.dQ) > 1e-9 || p.Qlago > 0 ? `Caudal con ${[Math.abs(r.represa.dQ) > 1e-9 ? 'la represa' : '', p.Qlago > 0 ? 'el lago' : ''].filter(Boolean).join(' y ')}` : 'Caudal', ...ids.map((id) => `${fmt(cal.hid[id].Q)} m³/s`)],
     ['Profundidad', ...ids.map((id) => `${fmt(cal.hid[id].y)} m`)],
     ['Velocidad', ...ids.map((id) => `${fmt(cal.hid[id].u)} m/s`)],
     ['Reaireación k<sub>a</sub>', ...ids.map((id) => `${fmt(cal.hid[id].ka, 1)} 1/día`)],
@@ -2013,10 +2039,11 @@ const PINTORES = {
       metricas: metricas([
         ['<b>El río en la bocatoma (km 44)</b>', '', ''],
         ['Escenario de lluvia', R.LLUVIAS[p.lluvia]?.nombre ?? 'Personalizado', ''],
-        ...(Math.abs(r.represa.dQ) > 1e-9 ? [
-          ['Cota de la lámina sin la represa', p.cotaRio, 'm.s.n.m.'],
-          [r.represa.dQ > 0 ? 'La represa suelta de más' : 'La represa guarda', Math.abs(r.represa.dQ), 'm³/s', '', 3],
-          ['Cota de la lámina con la represa', cotaEf(), 'm.s.n.m.'],
+        ...(Math.abs(r.represa.dQ) > 1e-9 || p.Qlago > 0 ? [
+          [p.Qlago > 0 ? 'Cota de la lámina sin la represa ni el lago' : 'Cota de la lámina sin la represa', p.cotaRio, 'm.s.n.m.'],
+          ...(Math.abs(r.represa.dQ) > 1e-9 ? [[r.represa.dQ > 0 ? 'La represa suelta de más' : 'La represa guarda', Math.abs(r.represa.dQ), 'm³/s', '', 3]] : []),
+          ...(p.Qlago > 0 ? [['Agua del lago (entra por la cabecera)', p.Qlago, 'm³/s', '', 3]] : []),
+          [p.Qlago > 0 ? (Math.abs(r.represa.dQ) > 1e-9 ? 'Cota de la lámina con la represa y el lago' : 'Cota de la lámina con el lago') : 'Cota de la lámina con la represa', cotaEf(), 'm.s.n.m.'],
         ] : [['Cota de la lámina', p.cotaRio, 'm.s.n.m.']]),
         ['Profundidad del agua', b.y, 'm'],
         ['Caudal del río', b.Q, 'm³/s'],
@@ -2866,6 +2893,7 @@ function pintarDiseno(f, datos) {
 
 function pintarTab(id) {
   if (id === 'datos') { pintarDatos(true); return; }
+  if (id === 'conexion') { pintarConexion(); return; }
   const datos = PINTORES[id]();
   const f = fichas[id];
   setHTML(f.metricas, datos.metricas);
@@ -3166,6 +3194,13 @@ function instantanea(nombre) {
   for (const [clave, etiqueta, unidad, dec, valor] of CONSTANTES) {
     filas.push({ clave: `p|${clave}`, bloque: 'Parámetros', grupo: 'Constantes del modelo', etiqueta, unidad, valor: valor(p), dec });
   }
+  for (const [clave, etiqueta, unidad, dec] of [
+    ['Qlago', 'Agua que entrega el lago a la cabecera', 'm³/s', 3],
+    ['Plago', 'Fósforo del agua del lago', 'µg/L', 1],
+    ['SSlago', 'Sedimento del agua del lago', 'mg/L', 1],
+  ]) {
+    filas.push({ clave: `p|${clave}`, bloque: 'Parámetros', grupo: 'Conexión · Lo que recibe del lago', etiqueta, unidad, valor: p[clave] ?? 0, dec });
+  }
   for (const t of TABS) {
     if (!PINTORES[t.id]) continue;
     captura = [];
@@ -3178,6 +3213,7 @@ function instantanea(nombre) {
       if (capturadas[1]) agregarResultados(filas, t.nombre, capturadas[1], `${t.nombre} · Experimento de Reynolds`);
     }
   }
+  agregarResultados(filas, 'Conexión', filasMagnitudes(N.salida(p, r).salida), 'Conexión · Lo que entrega a la ciénaga');
   return {
     nombre,
     momento: relojSimulado(sim.t).texto,
@@ -3234,6 +3270,7 @@ async function exportarExcel(boton) {
         ['Cosecha perdida por inundación', 100 * r.huella.perdida, '%', 1],
         ['Lluvia', `${r.lluvia.c.nombre}; ${fmt(r.lluvia.P30, 0)} mm en los últimos 30 días; ${r.lluvia.t.activa ? `tormenta de ${r.lluvia.t.T} años, ${fmt(r.lluvia.t.D, 0)} min, en: ${r.lluvia.t.z.nombre.toLowerCase()}` : 'sin tormenta'}`],
         ['Nivel de alerta', `${NOMBRE_ALERTA[r.lluvia.alerta]}${r.lluvia.motivos.length ? `: ${r.lluvia.motivos.join(', ')}` : ''}`],
+        ['Conexión con la serie', `${entradaAplicada ? `recibe ${fmt(p.Qlago)} m³/s del lago` : 'sin frontera del lago'}; entrega ${fmt(N.salida(p, r).salida.Q)} m³/s a la ciénaga`],
       ],
       actual: instantanea('Al exportar'),
       registro,
@@ -3277,6 +3314,195 @@ async function exportarExcel(boton) {
   } finally {
     boton.disabled = false;
   }
+}
+
+// ── Pestaña Conexión: frontera con los demás simuladores de la serie ────────
+// El río recibe del lago lo que desagua (entra por la cabecera, km 0) y entrega a la
+// ciénaga lo que sale por la desembocadura (km 50). Ver nodo.js y conexion.js.
+const PROYECTO = N.NODO.id;
+const RED_RIO = RED[PROYECTO] ?? { recibe: [], entrega: [] };
+let elCon = null;
+let entradaAplicada = null;     // frontera recibida (archivo o en vivo)
+let enlace = null;
+
+const fronteraActual = () => {
+  const s = N.salida(p, r);
+  return crearFrontera(PROYECTO, { nodo: s.nodo, salida: s.salida, clima: s.clima, tiempo: { reloj: relojSimulado(sim.t).texto, segundos: sim.t } });
+};
+
+/** Decimales según el tamaño del valor (como en los demás simuladores de la serie). */
+const decimalesDe = (v) => (Math.abs(v) >= 100 ? 1 : (Math.abs(v) >= 1 ? 2 : 3));
+const filasMagnitudes = (obj) => Object.entries(obj ?? {})
+  .filter(([, v]) => typeof v === 'number' && Number.isFinite(v))
+  .map(([k, v]) => [MAGNITUDES[k]?.nombre ?? k, v, MAGNITUDES[k]?.unidad ?? '', '', decimalesDe(v)]);
+
+/** Red de la serie: los proyectos en orden, con las conexiones del río resaltadas. */
+function redSVG() {
+  const ids = PROYECTOS.filter((x) => x.id !== 'sistema');
+  const w = 380;
+  const paso = w / ids.length;
+  const pos = Object.fromEntries(ids.map((x, k) => [x.id, paso * (k + 0.5)]));
+  const flecha = (a, b, cls) => {
+    const y = 40, x1 = pos[a], x2 = pos[b];
+    const curva = Math.abs(x2 - x1) > paso * 1.2 ? -22 * Math.sign(x2 - x1 || 1) : 0;
+    return `<path class="${cls}" d="M${x1} ${y} Q${(x1 + x2) / 2} ${y + curva - (curva ? 14 : 0)} ${x2} ${y}" marker-end="url(#punta-serie)"/>`;
+  };
+  const lazos = [];
+  for (const [a, v] of Object.entries(RED)) {
+    if (a === 'sistema') continue;
+    for (const b of v.entrega) lazos.push(flecha(a, b, a === PROYECTO || b === PROYECTO ? 'enlace activo' : 'enlace'));
+  }
+  const nodos = ids.map((x) => `<g class="nodo${x.id === PROYECTO ? ' propio' : ''}${RED_RIO.recibe.includes(x.id) ? ' recibe' : ''}${RED_RIO.entrega.includes(x.id) ? ' entrega' : ''}" transform="translate(${pos[x.id]} 40)"><circle r="11"/><text y="28">${x.nombre.replace(' exorreicos', '')}</text></g>`).join('');
+  return `<svg viewBox="0 0 ${w} 86" class="red-serie" role="img" aria-label="Red de la serie de simuladores"><defs><marker id="punta-serie" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z"/></marker></defs>${lazos.join('')}${nodos}</svg>`;
+}
+
+function descargarTexto(texto, nombre) {
+  const url = URL.createObjectURL(new Blob([texto], { type: 'application/json' }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = nombre;
+  a.rel = 'noopener';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+function crearFichaConexion(t, f) {
+  const lista = (ids, vacio) => (ids.length ? ids.map(nombreProyecto).join(', ') : vacio);
+  f.innerHTML = `
+    <p class="intro">${t.intro}</p>
+    <figure class="plano"><div class="svg-plano">${redSVG()}</div><figcaption>Red de la serie. En azul, este proyecto; las flechas resaltadas son sus conexiones: recibe de ${lista(RED_RIO.recibe, 'ningún proyecto')} y entrega a ${lista(RED_RIO.entrega, 'ningún proyecto')}. En la serie, el río desemboca en la ciénaga, que a su vez sale al delta y al mar.</figcaption></figure>
+    <h3>Lo que entrega a la ciénaga (frontera de salida)</h3>
+    <p class="nota-datos">Caudal, sedimento y calidad del agua en la desembocadura (km 50), con la represa, el vertimiento y el lago tal como están ahora en el simulador.</p>
+    <dl class="metricas" id="conSalida"></dl>
+    <div class="acciones"><button type="button" class="boton primario" id="btnExportarFrontera">Exportar frontera (.json)</button></div>
+    <h3>Lo que recibe del lago (frontera de entrada)</h3>
+    <p class="nota-datos" id="conEntradaTexto"></p>
+    <dl class="metricas" id="conEntrada"></dl>
+    <div class="acciones">
+      <label class="boton" for="archivoFrontera">Importar frontera…</label><input type="file" id="archivoFrontera" accept=".json,application/json" hidden>
+      <button type="button" class="boton" id="btnQuitarFrontera">Quitar la frontera recibida</button>
+    </div>
+    <p class="nota-datos" id="conMensaje" role="status" aria-live="polite"></p>
+    <h3>Enlace en vivo</h3>
+    <div class="control casilla"><label><input type="checkbox" id="chkPublicar" checked><span>Publicar la frontera de salida a los simuladores abiertos en este navegador</span></label></div>
+    <div class="control casilla"><label><input type="checkbox" id="chkRecibir"><span>Aplicar en vivo lo que publique el simulador de lagos</span></label></div>
+    <p class="nota-datos" id="conVecinos"></p>
+    <h3>Cómo se usa</h3>
+    <ol class="pasos-conexion">
+      <li>Sirve la carpeta que contiene todos los proyectos de la serie (<code>python -m http.server 8000</code>) y abre cada simulador desde <code>http://localhost:8000</code>.</li>
+      <li>Para llevar el río al <b>Sistema conectado</b>: deja marcada aquí «Publicar la frontera de salida» y, en el Sistema conectado, marca «Aplicar en vivo».</li>
+      <li>Para que el lago alimente el río: en el simulador de lagos deja marcada «Publicar la frontera de salida» y aquí marca «Aplicar en vivo».</li>
+      <li>Sin servidor común, usa «Exportar frontera» en uno e «Importar frontera» en el otro.</li>
+    </ol>`;
+  elFichas.appendChild(f);
+  elCon = {
+    raiz: f,
+    salida: f.querySelector('#conSalida'), entrada: f.querySelector('#conEntrada'), entradaTexto: f.querySelector('#conEntradaTexto'),
+    mensaje: f.querySelector('#conMensaje'), vecinos: f.querySelector('#conVecinos'),
+    publicar: f.querySelector('#chkPublicar'), recibir: f.querySelector('#chkRecibir'),
+  };
+  fichas[t.id] = elCon;
+  f.querySelector('#btnExportarFrontera').addEventListener('click', () => {
+    recalcular();
+    descargarTexto(textoFrontera(fronteraActual()), nombreFrontera(PROYECTO));
+    elCon.mensaje.textContent = 'Se descargó la frontera de salida del río. Impórtala en el simulador de ciénagas o en el Sistema conectado.';
+  });
+  f.querySelector('#archivoFrontera').addEventListener('change', async (e) => {
+    const archivo = e.target.files?.[0];
+    e.target.value = '';
+    if (!archivo) return;
+    try {
+      recibirFrontera(await leerArchivo(archivo), 'archivo');
+    } catch (err) {
+      elCon.mensaje.textContent = `No se pudo importar: ${err.message}`;
+    }
+  });
+  f.querySelector('#btnQuitarFrontera').addEventListener('click', () => {
+    const habia = Boolean(entradaAplicada);
+    quitarFrontera();
+    elCon.mensaje.textContent = habia
+      ? 'Se quitó la frontera del lago: el río volvió a llevar solo el agua de su cuenca.'
+      : 'No hay una frontera recibida para quitar.';
+  });
+  elCon.publicar.addEventListener('change', () => { ultimaPublicacion = 0; publicarEnVivo(); });
+}
+
+function pintarConexion() {
+  if (!elCon) return;
+  const fr = fronteraActual();
+  setHTML(elCon.salida, metricas(filasMagnitudes(fr.salida)));
+  if (entradaAplicada) {
+    setHTML(elCon.entradaTexto, `Aplicada la frontera de <b>${nombreProyecto(entradaAplicada.origen)}</b> (${escaparHTML(entradaAplicada.nodo ?? '')}${entradaAplicada.tiempo?.reloj ? `, ${escaparHTML(entradaAplicada.tiempo.reloj)}` : ''}). ${escaparHTML(entradaAplicada.__texto ?? '')} ${N.textoEntrada}`);
+    setHTML(elCon.entrada, metricas([
+      ...filasMagnitudes(entradaAplicada.salida),
+      ['<b>Efecto en el río</b>', '', ''],
+      ['Caudal en la bocatoma sin el lago', Math.max(0, r.rio.boc.Q - p.Qlago), 'm³/s', '', 3],
+      ['Caudal en la bocatoma con el lago', r.rio.boc.Q, 'm³/s', '', 3],
+      ['Cota de la lámina en la bocatoma', cotaEf(), 'm.s.n.m.'],
+    ]));
+  } else {
+    setHTML(elCon.entradaTexto, `Recibe de ${RED_RIO.recibe.map(nombreProyecto).join(', ')}. ${N.textoEntrada} ${N.textoSinEntrada}`);
+    setHTML(elCon.entrada, '');
+  }
+}
+
+/** Aplica al río lo que entrega el lago; devuelve false si la frontera no es para este proyecto. */
+function aplicarFrontera(fr, avisar = true) {
+  const entrada = N.entradas.find((e) => e.origen === fr.origen);
+  if (!entrada) {
+    if (avisar && elCon) elCon.mensaje.textContent = `Este simulador no recibe datos de ${nombreProyecto(fr.origen)}.`;
+    return false;
+  }
+  const res = entrada.aplicar(p, fr);
+  if (!res) return false;
+  Object.assign(p, res.cambios);
+  fr.__texto = res.texto ?? '';
+  return true;
+}
+
+function recibirFrontera(fr, como) {
+  if (!recibeDe(PROYECTO, fr.origen)) {
+    if (elCon) elCon.mensaje.textContent = `La frontera viene de ${nombreProyecto(fr.origen)}, que no entrega a este proyecto en la red de la serie (el río solo recibe del lago).`;
+    return;
+  }
+  if (aplicarFrontera(fr)) {
+    entradaAplicada = fr;
+    if (elCon) elCon.mensaje.textContent = `Frontera de ${nombreProyecto(fr.origen)} aplicada (${como}).`;
+    cambio();
+  }
+}
+
+function quitarFrontera() {
+  if (!entradaAplicada) return;
+  const entrada = N.entradas.find((e) => e.origen === entradaAplicada.origen);
+  for (const k of entrada?.claves ?? []) p[k] = S.PARAMETROS_DISENO[k] ?? M.PARAMETROS_INICIALES[k];
+  entradaAplicada = null;
+  cambio();
+}
+
+let ultimaPublicacion = 0;
+function publicarEnVivo() {
+  if (!enlace || (elCon && !elCon.publicar.checked)) return;
+  const ahora = performance.now();
+  if (ahora - ultimaPublicacion < 300) return;
+  ultimaPublicacion = ahora;
+  enlace.publicar(fronteraActual());
+}
+
+function iniciarEnlace() {
+  enlace = new EnlaceVivo(PROYECTO, {
+    alRecibir: (fr) => { if (elCon?.recibir.checked && recibeDe(PROYECTO, fr.origen)) recibirFrontera(fr, 'en vivo'); },
+    alCambiarVecinos: (v) => {
+      if (!elCon) return;
+      const lista = [...v.keys()].map(nombreProyecto);
+      elCon.vecinos.textContent = lista.length ? `Abiertos en este navegador: ${lista.join(', ')}.` : 'No hay otros simuladores de la serie abiertos en este navegador.';
+    },
+  });
+  if (elCon) elCon.vecinos.textContent = enlace.disponible ? 'Buscando otros simuladores de la serie abiertos en este navegador…' : 'Este navegador no permite el enlace en vivo; usa los archivos de frontera.';
+  setInterval(publicarEnVivo, 2000);
+  window.addEventListener('pagehide', () => enlace.cerrar());
 }
 
 /**
@@ -3450,6 +3676,7 @@ function controlesTiempo() {
   sel.addEventListener('change', () => { sim.factor = parseFloat(sel.value); });
   document.getElementById('btnReiniciar').addEventListener('click', () => {
     Object.assign(p, M.PARAMETROS_INICIALES, S.PARAMETROS_DISENO);
+    if (entradaAplicada) aplicarFrontera(entradaAplicada, false);
     sim.nivel = NIVEL_INICIAL;
     sim.nivelEmbalse = p.nivelEmbalse;
     sim.t = HORA_INICIAL;
@@ -3476,7 +3703,9 @@ function bucle(ahora) {
       pintarEstados();
       pintarReloj();
       const dinamicas = ['tanque', 'captacion', 'vivienda', 'tuberias', 'red', 'riego', 'represa'];
-      if (tabActiva === 'datos') {
+      if (tabActiva === 'conexion') {
+        pintarConexion();
+      } else if (tabActiva === 'datos') {
         const conGrafica = ahora - ultimaGrafica > 1000;
         if (conGrafica) ultimaGrafica = ahora;
         pintarDatos(conGrafica);
@@ -3505,6 +3734,9 @@ let experimento = null;
 
 function iniciar() {
   crearPanel();
+  ajustarPestanas();
+  window.addEventListener('resize', ajustarPestanas);
+  document.fonts?.ready?.then(ajustarPestanas);
   if (fichas.tuberias.exp) experimento = new ExperimentoReynolds(fichas.tuberias.exp.canvas);
   controlesTiempo();
   eventosPlano();
@@ -3536,7 +3768,8 @@ function iniciar() {
   mostrarTab('captacion');
   pintarPanel();
   actualizarEscena();
-  if (location.hash === '#depurar') window.__sim = { escena, p, sim, cambio };
+  iniciarEnlace();
+  if (location.hash === '#depurar') window.__sim = { escena, p, sim, cambio, frontera: fronteraActual, aplicar: (fr) => recibirFrontera(fr, 'prueba') };
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => pintarTab(tabActiva));
   requestAnimationFrame(bucle);
 }

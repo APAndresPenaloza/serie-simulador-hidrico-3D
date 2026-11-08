@@ -3273,7 +3273,7 @@ export class Escena {
   vistaDePestana(tab) {
     if (tab === 'bombas') return this.p?.bombaAnalisis === 'riego' ? 'riego' : 'general';
     if (tab === 'lluvia') return this.p?.tormentaT > 0 && this.p?.tormentaZona === 'baja' ? 'general' : 'cuenca';
-    return { rio: 'cuenca', represa: 'represa', riego: 'riego', huella: 'riego', acuifero: 'acuifero' }[tab] ?? 'general';
+    return { rio: 'cuenca', represa: 'represa', riego: 'riego', huella: 'riego', acuifero: 'acuifero', conexion: 'cuenca' }[tab] ?? 'general';
   }
 
   pasoVuelo() {
