@@ -112,6 +112,10 @@ button, select, input { font: inherit; color: inherit; }
   line-height: 1.1;
 }
 .marca p { font-size: 13px; color: var(--tinta-2); }
+/* Enlaces a la serie y a los documentos del simulador (bajo el subtítulo) */
+.marca .enlaces { display: flex; flex-wrap: wrap; gap: 2px 12px; margin-top: 3px; font-size: 12.5px; }
+.marca .enlaces a { color: var(--agua); font-weight: 600; text-decoration: none; }
+.marca .enlaces a:hover, .marca .enlaces a:focus-visible { text-decoration: underline; }
 
 .estados { display: flex; flex-wrap: wrap; gap: 6px 18px; min-width: 0; }
 

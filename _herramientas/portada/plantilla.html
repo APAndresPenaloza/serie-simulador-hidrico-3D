@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Simulador hídrico 3D · Serie</title>
+  <meta name="description" content="Serie de simuladores hídricos 3D: laguna, lago, río, ciénaga, delta, costa, océano y el sistema conectado del páramo al mar, con sus informes técnicos, manuales de uso y recorridos en video.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 3C16 3 6 14.5 6 20.5a10 10 0 0 0 20 0C26 14.5 16 3 16 3z' fill='%231C86B8'/%3E%3C/svg%3E">
+  <style>
+    :root { --fondo: #E6ECEA; --panel: #F6F8F7; --tinta: #12303B; --tinta-2: #4B6670; --linea: #C6D2D1; --agua: #1C86B8; --ocre: #B4823F; --ok: #2F7D5B; }
+    @media (prefers-color-scheme: dark) {
+      :root { --fondo: #0E2027; --panel: #132A33; --tinta: #E2EDEF; --tinta-2: #9BB5BC; --linea: #28454F; --agua: #49ADDA; --ocre: #D3A25E; --ok: #5BBE8E; }
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+    body { margin: 0; background: var(--fondo); color: var(--tinta); font: 16px/1.55 "Segoe UI", system-ui, -apple-system, sans-serif; }
+    a { color: var(--agua); }
+    header { padding: 40px 20px 24px; max-width: 1100px; margin: 0 auto; }
+    header h1 { margin: 0 0 6px; font-size: 30px; display: flex; gap: 12px; align-items: center; }
+    header h1 svg { width: 34px; height: 34px; fill: var(--agua); flex: none; }
+    header p { margin: 0; color: var(--tinta-2); max-width: 75ch; }
+    nav.indice { display: flex; flex-wrap: wrap; gap: 6px 22px; margin-top: 16px; font-size: 15px; }
+    nav.indice a { font-weight: 650; text-decoration: none; }
+    nav.indice a:hover, nav.indice a:focus-visible { text-decoration: underline; }
+    main { max-width: 1100px; margin: 0 auto; padding: 0 20px 48px; }
+    .red { background: var(--panel); border: 1px solid var(--linea); border-radius: 10px; padding: 16px; margin: 8px 0 28px; }
+    .red svg { width: 100%; height: auto; display: block; }
+    .red text { font-size: 12px; fill: var(--tinta); font-family: inherit; }
+    .red .t2 { font-size: 10.5px; fill: var(--tinta-2); }
+    h2 { font-size: 19px; margin: 36px 0 10px; scroll-margin-top: 16px; }
+    .intro { margin: 0 0 16px; color: var(--tinta-2); max-width: 80ch; }
+    .intro b { color: var(--tinta); }
+    .tarjetas { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(290px, 100%), 1fr)); gap: 14px; }
+    .tarjeta { display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--linea); border-radius: 10px; transition: border-color .15s, transform .15s; }
+    .tarjeta:hover, .tarjeta:focus-within { border-color: var(--agua); transform: translateY(-2px); }
+    .tarjeta a.abrir { flex: 1; display: flex; flex-direction: column; gap: 6px; padding: 16px 16px 12px; color: inherit; text-decoration: none; border-radius: 10px 10px 0 0; }
+    .tarjeta a.abrir:focus-visible { outline: 2px solid var(--agua); outline-offset: -2px; }
+    .tarjeta .n { font-size: 12px; color: var(--agua); font-weight: 650; letter-spacing: .04em; text-transform: uppercase; }
+    .tarjeta h3 { margin: 0; font-size: 17px; }
+    .tarjeta p { margin: 0; font-size: 14px; color: var(--tinta-2); }
+    .tarjeta .ir { margin-top: auto; padding-top: 6px; font-size: 13px; font-weight: 650; color: var(--agua); }
+    .tarjeta.sistema { border-color: var(--agua); background: color-mix(in srgb, var(--agua) 8%, var(--panel)); }
+    .accesos { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 10px 16px 14px; border-top: 1px solid var(--linea); }
+    .accesos a { font-size: 12.5px; font-weight: 650; text-decoration: none; padding: 3px 10px; border: 1px solid var(--linea); border-radius: 999px; background: var(--fondo); }
+    .accesos a:hover, .accesos a:focus-visible { border-color: var(--agua); outline: none; }
+    .tabla { overflow-x: auto; background: var(--panel); border: 1px solid var(--linea); border-radius: 10px; }
+    table.docs { width: 100%; min-width: 640px; border-collapse: collapse; font-size: 14px; }
+    table.docs th, table.docs td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--linea); white-space: nowrap; }
+    table.docs thead th { font-size: 12px; font-weight: 650; text-transform: uppercase; letter-spacing: .04em; color: var(--tinta-2); }
+    table.docs tbody tr:last-child th, table.docs tbody tr:last-child td { border-bottom: 0; }
+    table.docs tbody th { font-weight: 600; }
+    table.docs a { font-weight: 650; text-decoration: none; }
+    table.docs a:hover, table.docs a:focus-visible { text-decoration: underline; }
+    table.docs tbody th a { color: var(--tinta); }
+    .peso { color: var(--tinta-2); font-size: 12.5px; font-weight: 400; }
+    @media (max-width: 700px) {
+      .tabla { overflow: visible; }
+      table.docs { min-width: 0; }
+      table.docs thead { display: none; }
+      table.docs, table.docs tbody, table.docs tr, table.docs th, table.docs td { display: block; }
+      table.docs tr { padding: 10px 0; border-bottom: 1px solid var(--linea); }
+      table.docs tbody tr:last-child { border-bottom: 0; }
+      table.docs th, table.docs td { border: 0; padding: 3px 14px; white-space: normal; }
+      table.docs tbody th { font-size: 15px; padding-bottom: 6px; }
+      table.docs td::before { content: attr(data-titulo); display: block; font-size: 11.5px; font-weight: 650; letter-spacing: .04em; text-transform: uppercase; color: var(--tinta-2); }
+    }
+    .videos { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(330px, 100%), 1fr)); gap: 16px; }
+    .videos figure { margin: 0; background: var(--panel); border: 1px solid var(--linea); border-radius: 10px; overflow: hidden; scroll-margin-top: 16px; }
+    .videos figure:target { border-color: var(--agua); box-shadow: 0 0 0 2px var(--agua); }
+    .videos video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; background: #0b3550; }
+    .videos figcaption { padding: 10px 14px 12px; font-size: 14px; }
+    .videos figcaption b { display: block; margin-bottom: 2px; }
+    .videos figcaption a { font-weight: 650; text-decoration: none; }
+    .videos figcaption a:hover, .videos figcaption a:focus-visible { text-decoration: underline; }
+    .videos .sep { color: var(--tinta-2); }
+    .nota { font-size: 14px; color: var(--tinta-2); background: var(--panel); border-left: 3px solid var(--ocre); padding: 10px 14px; border-radius: 4px; margin-top: 18px; max-width: 80ch; }
+    code { font-size: 13px; background: var(--fondo); padding: 1px 5px; border-radius: 3px; }
+    footer { max-width: 1100px; margin: 0 auto; padding: 0 20px 32px; font-size: 13px; color: var(--tinta-2); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3C16 3 6 14.5 6 20.5a10 10 0 0 0 20 0C26 14.5 16 3 16 3z"/></svg>Simulador hídrico 3D</h1>
+    <p>Serie de simuladores web en 3D para estudiar el agua de Colombia con álgebra y geometría analítica, del páramo al océano. Cada simulador es autónomo y entrega a sus vecinos lo que sale de él; el sistema conectado los une a todos.</p>
+    <nav class="indice" aria-label="Secciones de la página">
+      <a href="#simuladores">Los simuladores</a>
+      <a href="#documentos">Base de información</a>
+      <a href="#recorridos">Recorridos en video</a>
+    </nav>
+  </header>
+  <main>
+    <div class="red" role="img" aria-label="Red de la serie: laguna, lago, río, ciénaga, delta, playa y océano">
+      <svg viewBox="0 0 900 190">
+        <defs><marker id="p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#4B6670"/></marker></defs>
+        <g fill="none" stroke="#1C86B8" stroke-width="3" marker-end="url(#p)">
+          <path d="M78 95 H148"/><path d="M198 95 H268"/><path d="M318 95 H388"/><path d="M438 88 H508"/><path d="M508 102 H438"/><path d="M558 95 H628"/>
+        </g>
+        <path d="M533 70 C 560 20, 700 20, 790 62" fill="none" stroke="#B4823F" stroke-width="2.5" marker-end="url(#p)"/>
+        <g fill="none" stroke="#4B6670" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#p)">
+          <path d="M650 120 C 600 165, 470 165, 418 122"/><path d="M652 112 C 620 140, 560 140, 540 120"/><path d="M700 95 H780"/>
+        </g>
+        <g stroke="#1C86B8" stroke-width="2.5" fill="#F6F8F7">
+          <circle cx="55" cy="95" r="22"/><circle cx="175" cy="95" r="22"/><circle cx="295" cy="95" r="22"/><circle cx="415" cy="95" r="22"/><circle cx="535" cy="95" r="22"/><circle cx="675" cy="95" r="24" fill="#1C86B8"/><circle cx="805" cy="95" r="22"/>
+        </g>
+        <g text-anchor="middle">
+          <text x="55" y="140">Laguna</text><text x="175" y="140">Lago</text><text x="295" y="140">Río</text><text x="415" y="140">Ciénaga</text><text x="535" y="140">Delta</text><text x="675" y="145">Océano</text><text x="805" y="140">Playa</text>
+          <text class="t2" x="660" y="28">arena del río grande</text><text class="t2" x="540" y="180">nivel, marea, oleaje y salinidad del mar</text>
+        </g>
+      </svg>
+    </div>
+
+    <h2 id="simuladores">Los simuladores</h2>
+    <div class="tarjetas">
+{{TARJETAS}}
+    </div>
+
+    <h2 id="documentos">Base de información</h2>
+    <p class="intro">Cada simulador tiene dos documentos. El <b>informe técnico</b> explica el problema, el modelo matemático con sus ecuaciones, los supuestos, el escenario base y las referencias. El <b>manual de uso</b> enseña paso a paso a manejar el simulador: la escena 3D, cada pestaña con sus controles y resultados, los escenarios guiados, la descarga a Excel y la conexión con los demás simuladores. Los PDF se abren en el navegador y los archivos de Word se descargan para editarlos.</p>
+    <div class="tabla">
+      <table class="docs">
+        <thead><tr><th scope="col">Simulador</th><th scope="col">Informe técnico</th><th scope="col">Manual de uso</th><th scope="col">Recorrido</th></tr></thead>
+        <tbody>
+{{FILAS}}
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="recorridos">Recorridos en video</h2>
+    <p class="intro">Un recorrido de unos 45 segundos por cada simulador: girar la escena, cambiar de vista, mover un control, probar un escenario, leer la revisión del diseño y guardar los datos. Los mismos recorridos están en GIF para ponerlos en diapositivas o documentos.</p>
+    <div class="videos">
+{{VIDEOS}}
+    </div>
+  </main>
+  <footer>Realizado por estudiantes de primer semestre Andrés Mauricio Peñaloza Fernández & Eliana Carolina María Wong Lubo para el proyecto integrador de Álgebra y Geometría Analítica - Luis Mario Duarte Sánchez; Álgebra lineal aplicada - Ellery Gregorio Chacuto López e Introducción a las ciencias del agua y a la tecnología - David Ricardo De León Pérez & Jaris Jesid González Moreno, 2026-II.  · Institución Universitaria de Santa Marta (USM) · Programa de Ingeniería del Agua y Desarrollo Sostenible.</footer>
+</body>
+</html>

@@ -9,6 +9,16 @@ const nucleo = join(raiz, '_nucleo');
 const pedidas = process.argv.slice(2);
 const proyectos = readdirSync(raiz).filter((d) => d.startsWith('simulador-hidrico-3D - ') && !d.includes('Rios exorreicos') && (!pedidas.length || pedidas.some((x) => d.includes(x))));
 
+// Enlaces bajo el subtítulo: la página de la serie y los documentos y recorridos de este simulador
+const enlaces = (d) => !d ? '' : `
+        <nav class="enlaces" aria-label="Documentos de este simulador">
+          <a href="../">Serie</a>
+          <a href="${d.informe}" target="_blank" rel="noopener">Informe</a>
+          <a href="${d.manual}" target="_blank" rel="noopener">Manual</a>
+          <a href="${d.video}" target="_blank" rel="noopener">Video</a>
+          <a href="${d.gif}" target="_blank" rel="noopener">GIF</a>
+        </nav>`;
+
 const plantilla = (m) => `<!doctype html>
 <html lang="es">
 <head>
@@ -38,7 +48,7 @@ const plantilla = (m) => `<!doctype html>
       <svg class="gota" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3C16 3 6 14.5 6 20.5a10 10 0 0 0 20 0C26 14.5 16 3 16 3z"/></svg>
       <div>
         <h1>${m.titulo}</h1>
-        <p>${m.subtitulo}</p>
+        <p>${m.subtitulo}</p>${enlaces(m.documentos)}
       </div>
     </div>
 

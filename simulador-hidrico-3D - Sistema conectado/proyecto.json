@@ -6,5 +6,11 @@
   "etiquetaEscena": "Vista 3D esquemática de la red del agua, del páramo al océano",
   "ayuda": "Arrastra para girar la vista y usa la rueda o dos dedos para acercar. Toca un cuerpo de agua para ver su pestaña; con los botones de arriba vas a la Sierra, a la costa o al mar.",
   "leyenda": "<span class=\"muestra muestra-flujo\"></span>Agua que baja por la red <span class=\"muestra muestra-ocre\"></span>Sedimento y plumas de los ríos <span class=\"muestra muestra-salado\"></span>Agua de mar <span class=\"nota\">Escena esquemática: distancias, alturas y anchos fuera de escala.</span>",
-  "pie": "Proyecto de Álgebra y Geometría Analítica, Álgebra lineal aplicada e Introducción a las ciencias del agua y a la tecnología, 2026-II · Serie de simuladores hídricos 3D. Requiere las carpetas de los demás proyectos junto a esta (como vienen en el .zip de la serie)."
+  "pie": "Proyecto de Álgebra y Geometría Analítica, Álgebra lineal aplicada e Introducción a las ciencias del agua y a la tecnología, 2026-II · Serie de simuladores hídricos 3D. Requiere las carpetas de los demás proyectos junto a esta (como vienen en el .zip de la serie).",
+  "documentos": {
+    "informe": "documentos/Informe_Simulador_Hidrico_3D_Sistema_Conectado.pdf",
+    "manual": "documentos/Manual_Simulador_Hidrico_3D_Sistema_Conectado.pdf",
+    "video": "../VIDEOS/08_Sistema_conectado.mp4",
+    "gif": "../GIF/08_Sistema_conectado.gif"
+  }
 }
