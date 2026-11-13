@@ -5,8 +5,10 @@
  * fondo). Al sur está la costa con el mareógrafo, al occidente la boca del río grande con su
  * pluma y el arrecife de coral, que se blanquea con el calor acumulado. En la vista Columna la
  * mitad oriental se recorta y se ve la columna de agua coloreada por la temperatura, con la
- * termoclina, la espiral de Ekman y la celda del afloramiento. La escena solo dibuja: los
- * números vienen de sistema.js.
+ * termoclina, la espiral de Ekman y la celda del afloramiento. En la punta de la península
+ * (La Guajira) se levanta la Serranía de Macuira, con su bosque de niebla arriba de 550 m, la
+ * nube que los alisios forman sobre ella (su base sube y baja con la hora y la humedad) y los
+ * atrapanieblas. La escena solo dibuja: los números vienen de sistema.js.
  */
 import { EscenaBase, THREE, caja, cilindro, nube, azar, reiniciarAzar, suave, mezclar, ruidoSuave, rotulo } from './nucleo/escena-base.js';
 import * as M from './modelo.js';
@@ -18,6 +20,16 @@ const VZ = 0.35;                      // unidades por metro en el corte (profund
 const PROF = 300;                     // m de la columna dibujada
 const limitar01 = (v) => Math.min(1, Math.max(0, v));
 const FRIO = new THREE.Color(0x2f9a9a), TIBIO = new THREE.Color(0x1f6fb0), CALIDO = new THREE.Color(0x1b4f9c);
+// Serranía de Macuira en la punta de la península: alturas reales × VS (unidades por metro)
+const VS = 0.05;
+const CUMBRES = [[201, -14, 867, 10, 11], [206, 5, 760, 9, 12], [199, 19, 610, 9, 9]];   // x, z, m, σx, σz
+/** Altura de la serranía (m) en (x, z): una cresta de norte a sur con tres cumbres (la más alta, el cerro Palúa). */
+function alturaMacuira(x, z) {
+  let h = 0;
+  for (const [cx, cz, H, sx, sz] of CUMBRES) h = Math.max(h, H * Math.exp(-(((x - cx) / sx) ** 2) - ((z - cz) / sz) ** 2));
+  const cresta = 470 * Math.exp(-(((x - 203) / 11) ** 2)) * suave(limitar01((z + 34) / 10)) * suave(limitar01((30 - z) / 10));
+  return Math.max(h, cresta);
+}
 
 /** Color de una temperatura para el corte (de azul frío a rojo cálido). */
 function colorT(T) {
@@ -37,7 +49,7 @@ export class Escena extends EscenaBase {
     super(contenedor, opciones);
     this.cielo = 0xcfe4ee;
     this.niebla = [520, 1300];
-    this.pestanaVista = { olas: 'mar', mareas: 'guajira', viento: 'columna', temperatura: 'arrecife', salinidad: 'mar', nivel: 'guajira', carbono: 'arrecife' };
+    this.pestanaVista = { olas: 'mar', mareas: 'guajira', viento: 'columna', niebla: 'macuira', temperatura: 'arrecife', salinidad: 'mar', nivel: 'guajira', carbono: 'arrecife' };
     this.amp = 1; this.longitud = 40; this.periodo = 6; this.Ufac = 1;
   }
 
@@ -47,6 +59,7 @@ export class Escena extends EscenaBase {
       columna: { pos: [165, 45, 120], mira: [5, -38, 5], etiquetas: ['termoclina', 'ekman', 'afloramiento'] },
       guajira: { pos: [190, 55, 215], mira: [120, 0, 90], etiquetas: ['afloramiento', 'nivel', 'viento', 'olas'] },
       arrecife: { pos: [-140, 40, 160], mira: [-185, -6, 70], etiquetas: ['arrecife', 'carbono', 'pluma'] },
+      macuira: { pos: [118, 62, -112], mira: [203, 22, -2], etiquetas: ['macuira', 'atrapanieblas', 'viento'] },
     };
   }
 
@@ -61,10 +74,12 @@ export class Escena extends EscenaBase {
       ['carbono', 'carbono', 'pH y aragonito', 'secundaria'],
       ['pluma', 'salinidad', 'Pluma del río grande'],
       ['nivel', 'nivel', 'Mareógrafo'],
+      ['macuira', 'niebla', 'Serranía de Macuira'],
+      ['atrapanieblas', 'niebla', 'Atrapanieblas', 'secundaria'],
     ];
   }
 
-  centrosEtiquetas() { return { nivel: [0.5, 1], arrecife: [0.5, 1] }; }
+  centrosEtiquetas() { return { nivel: [0.5, 1], arrecife: [0.5, 1], macuira: [0.5, 1] }; }
 
   altura(x, z) {
     // Fondo del mar: plataforma cerca de la costa, talud y mar profundo
@@ -77,12 +92,19 @@ export class Escena extends EscenaBase {
     if (z > Z_COSTA - 4 || (x > 170 && z > -40)) {
       const t = z > Z_COSTA - 4 ? limitar01((z - Z_COSTA + 4) / 10) : limitar01((x - 170) / 12) * limitar01((z + 40) / 12);
       y = mezclar(y, 2 + 8 * ruidoSuave(x, z, 30) + 10 * suave(limitar01((z - Z_COSTA - 30) / 80)), suave(t));
+      // Serranía de Macuira (solo sobre la península)
+      if (x > 172 && z > -36) y = Math.max(y, VS * alturaMacuira(x, z) * suave(limitar01((x - 172) / 8)) * suave(limitar01((z + 36) / 6)) + 2);
     }
     this.ultY = y;
     return y;
   }
 
   colorTerreno(c, x, z, y) {
+    if (x > 172 && z > -36 && y > 9) {
+      // Serranía: bosque seco y cardonal abajo; bosque de niebla (verde oscuro) desde 550 m
+      c.set(0x9c9a5c).lerp(new THREE.Color(0x6f8a45), limitar01((y - 9) / 14)).lerp(new THREE.Color(0x2c5a33), suave(limitar01((y - 25.5) / 4)));
+      return;
+    }
     if (y > 0.8) { c.setRGB(0.84, 0.74, 0.52).lerp(new THREE.Color(0x8a9a58), limitar01((y - 6) / 12) * (x < 150 ? 0.8 : 0.25)); return; }
     if (y > -1) { c.setRGB(0.88, 0.8, 0.6); return; }
     c.setRGB(0.78, 0.72, 0.55).lerp(new THREE.Color(0x3f5f6a), limitar01(-y / 45));
@@ -115,6 +137,7 @@ export class Escena extends EscenaBase {
     this.armarCosta();
     this.armarArrecife();
     this.armarPluma();
+    this.armarMacuira();
     this.armarCorte();
     this.nubes = [];
     for (let k = 0; k < 8; k++) {
@@ -180,7 +203,7 @@ export class Escena extends EscenaBase {
     }
     this.molinos = [];
     for (let k = 0; k < 6; k++) {
-      const x = 195 + (k % 3) * 18, z = 20 + Math.floor(k / 3) * 40;
+      const x = 195 + (k % 3) * 18, z = 52 + Math.floor(k / 3) * 36;
       const torre = cilindro(0.5, 0.8, 22, 0xf2f2f2, { lados: 8 });
       torre.position.set(x, this.altura(x, z) + 11, z);
       const rotor = new THREE.Group();
@@ -253,6 +276,72 @@ export class Escena extends EscenaBase {
     const boca = caja(10, 0.6, 26, 0x9a8558);
     boca.position.set(-110, 0.8, Z_COSTA + 8);
     this.grupoPluma.add(boca);
+  }
+
+  /** Serranía de Macuira: bosque de niebla, cardones, la nube de los alisios y los atrapanieblas. */
+  armarMacuira() {
+    this.grupoMacuira = this.grupo('niebla');
+    reiniciarAzar(867);
+    // Árboles del bosque de niebla (arriba de 550 m) y cardones del bosque seco (abajo)
+    const arboles = [], cardones = [];
+    for (let k = 0; k < 2600 && (arboles.length < 230 || cardones.length < 90); k++) {
+      const x = 180 + azar() * 46, z = -34 + azar() * 66;
+      const m = alturaMacuira(x, z);
+      const y = this.altura(x, z);
+      if (m > 560 && arboles.length < 230) arboles.push({ x, y, z, s: 1.1 + azar() * 1.1 });
+      else if (m > 120 && m < 430 && cardones.length < 90) cardones.push({ x, y, z, s: 0.8 + azar() * 0.7 });
+    }
+    const m4 = new THREE.Matrix4();
+    const copas = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 0), new THREE.MeshStandardMaterial({ color: 0x24502c, roughness: 0.9, flatShading: true }), arboles.length);
+    arboles.forEach((a, k) => { m4.makeScale(a.s, a.s * 1.2, a.s).setPosition(a.x, a.y + a.s, a.z); copas.setMatrixAt(k, m4); });
+    const tallos = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.35, 0.45, 1, 6), new THREE.MeshStandardMaterial({ color: 0x6f8f4a, roughness: 0.8, flatShading: true }), cardones.length);
+    cardones.forEach((a, k) => { m4.makeScale(a.s, 3.2 * a.s, a.s).setPosition(a.x, a.y + 1.6 * a.s, a.z); tallos.setMatrixAt(k, m4); });
+    copas.castShadow = true; tallos.castShadow = true;
+    this.grupoMacuira.add(copas, tallos);
+    // La nube sobre la serranía: bocanadas que se apoyan en la base de las nubes
+    this.matNubeMac = new THREE.MeshStandardMaterial({ color: 0xf4f7f8, roughness: 1, flatShading: true, transparent: true, opacity: 0.8, depthWrite: false });
+    this.bocanadas = [];
+    for (let k = 0; k < 16; k++) {
+      const g = new THREE.Group();
+      const n = 3 + (k % 3);
+      for (let j = 0; j < n; j++) {
+        const m = new THREE.Mesh(new THREE.IcosahedronGeometry(3 + azar() * 3.5, 1), this.matNubeMac);
+        m.position.set((azar() - 0.5) * 9, (azar() - 0.2) * 3, (azar() - 0.5) * 9);
+        g.add(m);
+      }
+      const x = 186 + azar() * 34, z = -30 + (k / 15) * 58 + (azar() - 0.5) * 6;
+      g.userData = { x, z, fase: azar() * Math.PI * 2 };
+      g.renderOrder = 5;
+      this.grupoMacuira.add(g);
+      this.bocanadas.push(g);
+    }
+    // Atrapanieblas: mallas negras entre dos postes, de frente a los alisios (que vienen del este)
+    this.atrapas = [];
+    const matMalla = new THREE.MeshStandardMaterial({ color: 0x1d1d1d, roughness: 0.9, transparent: true, opacity: 0.78, side: THREE.DoubleSide });
+    for (let k = 0; k < 4; k++) {
+      const g = new THREE.Group();
+      const malla = new THREE.Mesh(new THREE.PlaneGeometry(4.8, 1.6), matMalla);
+      malla.position.y = 2.2;
+      malla.rotation.y = Math.PI / 2;
+      const p1 = cilindro(0.12, 0.12, 3.2, 0x8a6b4a, { lados: 5 }), p2 = p1.clone();
+      p1.position.set(0, 1.6, -2.4); p2.position.set(0, 1.6, 2.4);
+      g.add(malla, p1, p2);
+      this.grupoMacuira.add(g);
+      this.atrapas.push(g);
+    }
+    this.indexar(this.grupoMacuira);
+  }
+
+  /** Ubica los atrapanieblas en la ladera de barlovento (este) a la altura pedida. */
+  ubicarAtrapanieblas(zAtrapa, n) {
+    const objetivo = VS * zAtrapa + 2;
+    this.atrapas.forEach((g, k) => {
+      const z = -18 + k * 9;
+      let x = 228;
+      for (let xx = 228; xx > 196; xx -= 0.5) { if (this.altura(xx, z) >= objetivo) { x = xx; break; } }
+      g.position.set(x, this.altura(x, z), z);
+      g.visible = k < Math.min(4, n);
+    });
   }
 
   /** Columna de agua en el plano x = 0: textura con la temperatura, flechas de Ekman y afloramiento. */
@@ -351,6 +440,11 @@ export class Escena extends EscenaBase {
     const blanq = r.alerta.nivel >= 3 ? 1 : (r.alerta.nivel === 2 ? 0.45 : (r.alerta.nivel === 1 ? 0.15 : 0));
     const b2 = Math.max(blanq, limitar01((r.DHW - 2) / 8));
     if (Math.abs(b2 - (this.blanqueo ?? -1)) > 0.02) { this.blanqueo = b2; this.pintarCoral(b2); }
+    // Serranía de Macuira: la nube se apoya en su base y es más densa con más agua líquida
+    const mac = r.mac;
+    this.yBaseNube = VS * mac.aire.zb + 2;
+    this.matNubeMac.opacity = Math.min(0.9, 0.35 + 3.5 * mac.nb.lwcBosque);
+    if (this.zAtrapaDibujada !== `${p.zAtrapa}|${p.nAtrapa}`) { this.zAtrapaDibujada = `${p.zAtrapa}|${p.nAtrapa}`; this.ubicarAtrapanieblas(p.zAtrapa, p.nAtrapa); }
     // Corte
     const firma = `${r.T.toFixed(1)}|${p.Tfondo}|${p.zMezcla}|${p.delta}`;
     if (firma !== this.firmaCorte) { this.firmaCorte = firma; this.pintarCorte(p, r); }
@@ -378,6 +472,9 @@ export class Escena extends EscenaBase {
     this.etiqueta('carbono', `pH ${fmt(r.fu.pH, 3)} · Ω ${fmt(r.fu.Om, 2)} en ${p.anoHorizonte}`, r.fu.Om >= 3 ? 'ok' : 'alerta', [-160, 4, 50]);
     this.etiqueta('pluma', `${miles(p.Qrio)} m³/s · ${fmt(r.pl.S, 1)} PSU frente a la boca`, r.pl.Sarrecife >= 34 ? 'ok' : 'aviso', [-110, 5, Z_COSTA - rad * 0.6]);
     this.etiqueta('nivel', `${conSigno(r.fu.nivel / 10, 1)} cm en ${p.anoHorizonte} · marea ${conSigno(q.eta, 2)} m`, r.fu.nivel <= 300 ? 'ok' : 'aviso', [122.5, 10, Z_COSTA - 27]);
+    const dentro = mac.aire.zb < 867;
+    this.etiqueta('macuira', dentro ? `base de las nubes a ${miles(mac.aire.zb)} m · ${fmt(mac.mmDia, 1)} mm/día de niebla` : `nubes desde ${miles(mac.aire.zb)} m: la cima queda seca`, r.a.niebla >= 500 ? (dentro ? 'ok' : 'aviso') : 'alerta', [201, VS * 867 + 12, -14]);
+    this.etiqueta('atrapanieblas', `${fmt(mac.litrosM2Dia, 1)} L/m²·día · ${miles(mac.aguaAno)} L/día en el año`, mac.aguaPeor >= mac.demanda ? 'ok' : 'aviso', [this.atrapas[0].position.x + 4, this.atrapas[0].position.y + 6, this.atrapas[0].position.z]);
   }
 
   irAVista(nombre, inmediato) {
@@ -414,6 +511,20 @@ export class Escena extends EscenaBase {
     this.buque.position.set(((t * 6) % 520) - 260, nivel + 0.2, -90);
     for (const m of this.molinos) m.rotation.x += dt * 2 * (this.Ufac ?? 1);
     for (const n of this.nubes) { n.position.x -= dt * 4 * (this.Ufac ?? 1); if (n.position.x < -280) n.position.x = 280; }
+    // La nube de Macuira: bocanadas sobre la base de las nubes, que el viento arrastra hacia el oeste
+    if (this.bocanadas) {
+      const yb = this.yBaseNube ?? 30;
+      const cima = VS * 867 + 2;
+      for (const b of this.bocanadas) {
+        const u = b.userData;
+        u.x -= dt * 1.2 * (this.Ufac ?? 1);
+        if (u.x < 178) u.x = 224;
+        const suelo = this.altura(u.x, u.z);
+        const y = Math.max(yb + 3, suelo + 1.5) + 1.2 * Math.sin(t * 0.4 + u.fase);
+        b.position.set(u.x, y, u.z);
+        b.visible = yb < cima + 6 && y < cima + 14;
+      }
+    }
     // Celda del afloramiento en el corte
     if (this.grupoCorte.visible) {
       const pts = this.celda.geometry.attributes.position;

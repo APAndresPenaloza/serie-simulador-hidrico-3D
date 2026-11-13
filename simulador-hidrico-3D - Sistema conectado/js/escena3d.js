@@ -509,7 +509,7 @@ export class Escena extends EscenaBase {
     this.etiqueta('lago', `${fmt(hoy.lagos.Q, 2)} m³/s hoy · τ ${fmt(ind.lago.tauAnos, 0)} años`, ind.lago.secos.length ? 'alerta' : 'ok', [LAGO.x, COTA_LAGO + 7, LAGO.z]);
     this.etiqueta('rio', `${fmt(Qs, 2)} m³/s hoy`, ind.rio.sinCaptar.length ? 'alerta' : 'ok', [RIO_SIERRA[44][0], aguaSierra(44 / 70) + 7, RIO_SIERRA[44][1]]);
     this.etiqueta('cienaga', `${fmt(S, 1)} PSU · sale ${fmt(Qci, 0)} m³/s`, S <= 40 ? 'ok' : 'alerta', [CIE.x, 5, CIE.z]);
-    this.etiqueta('canos', `${fmt(ind.cienaga.Qc, 0)} m³/s en el año`, 'ok', [-205, 3, 8]);
+    this.etiqueta('canos', Number.isFinite(ind.cienaga.QcOut) ? `entran ${fmt(ind.cienaga.QcIn, 0)} · vuelven al río ${fmt(ind.cienaga.QcOut, 1)} m³/s` : `${fmt(ind.cienaga.Qc, 0)} m³/s en el año`, 'ok', [-205, 3, 8]);
     this.etiqueta('boca', `al mar: ${fmt(Qci, 0)} m³/s`, 'ok', [-52, 3, -68]);
     this.etiqueta('delta', `${miles(Qg)} m³/s · ${fmt(ind.delta.C, 0)} mg/L`, 'ok', [BOCA_DELTA[0], 8, BOCA_DELTA[1] + 22]);
     this.etiqueta('playa', Number.isFinite(ind.playa.dW) ? `H ${fmt(this.Hplaya, 2)} m · ${conSigno(ind.playa.dW, 2)} m/año` : `H ${fmt(this.Hplaya, 2)} m`, !Number.isFinite(ind.playa.dW) || ind.playa.dW >= 0 ? 'ok' : 'alerta', [128, 7, zCosta(128) + 4]);

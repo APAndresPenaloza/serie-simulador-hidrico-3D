@@ -15,7 +15,7 @@ test('Escenario base: la red y los siete simuladores cumplen todos sus criterios
   const fallas = todos.filter((c) => c.nivel !== 'ok');
   assert.equal(fallas.length, 0, fallas.map((c) => c.texto).join('; '));
   const total = C.ORDEN.reduce((a, id) => a + r.cad.nodos[id].revision.total, 0);
-  assert.equal(total, 78);
+  assert.equal(total, 81);   // 14 de la ciénaga, 15 del lago (con el cultivo de peces), 8 del océano (con el bosque de niebla)…
   assert.equal(r.revision.red.length, 3 + 7);
 });
 

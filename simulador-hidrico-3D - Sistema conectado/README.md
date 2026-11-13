@@ -60,8 +60,8 @@ documentos/            Informe técnico científico y manual de usuario (.docx)
 | Ecuación lineal | Suma de caudales en las confluencias; mezcla como promedio ponderado C = ΣQ·C/ΣQ; carga Q·C; arena de la playa proporcional a la carga del río grande; ancho de la playa W(t) = W₀ + v·t | `mensual` (nodos/rios.js), `trazadores` (cadena.js) |
 | Composición de funciones | Q_río = f_río(f_lago(f_laguna(clima))): la salida de un simulador es la entrada del siguiente | `calcularCadena`, `evaluarNodo` |
 | Matrices | Matriz de adyacencia A de la red, A² (caminos de dos pasos) y alcanzabilidad R = A + A² + … + A⁶ | `adyacencia`, `multiplicar`, `potencia`, `alcanzabilidad` |
-| Sistema de ecuaciones lineales | Trazadores (I − M)·F = B resueltos con Gauss-Jordan; determinante det(I − M) = 1 − m_CX·m_XC | `trazadores`, `gaussJordan` |
-| Sucesión convergente | Iteración de punto fijo del lazo ciénaga ⇄ delta ⇄ océano con su error relativo | `calcularCadena`, `errorRelativo` |
+| Sistema de ecuaciones lineales | Trazadores (I − M)·F = B resueltos con Gauss-Jordan; determinante det(I − M) = 1 − m_CX·m_XC − m_CX·m_XD·m_DC (dos ciclos: la ciénaga y el mar se dan agua, y la ciénaga le devuelve agua al río grande por los caños, que la lleva al mar) | `trazadores`, `gaussJordan` |
+| Sucesión convergente | Iteración de punto fijo del lazo ciénaga ⇄ delta ⇄ océano con su error relativo (el error baja unas cincuenta veces en cada vuelta) | `calcularCadena`, `errorRelativo` |
 | Función racional | Tiempo de residencia τ = V/Q; regla de Bruun R = S·x_c/(B + h_c) | `edadAgua`, pestaña El mar y la costa |
 | Suma de una serie | Edad del agua: τ_laguna + τ_lago + t_río + τ_ciénaga | `edadAgua` |
 | Función cuadrática y su derivada | Ascenso del mar h(t) = a·t + b·t² y su rapidez h′(t) = a + 2b·t, que el océano entrega a la costa | `HORIZONTES`, nodo del océano |
@@ -71,9 +71,9 @@ documentos/            Informe técnico científico y manual de usuario (.docx)
 
 ## Escenario base
 
-Año normal, horizonte 2026 y ningún eslabón intervenido. La laguna rebosa 106.9 L/s al lago (tiempo de residencia de 38.3 días); el lago, con su cuenca, su lluvia, su evaporación y su toma, desagua 1.40 m³/s al río (8.4 % más que sin la laguna) y retiene el agua 26.0 años; el río lleva 7.79 m³/s a la ciénaga (6.37 de su cuenca y 1.40 del lago), con 823 mg/L de sedimento y 43.0 µg/L de fósforo, y tarda 16.6 horas en recorrer sus tres zonas. La ciénaga saca 254.7 m³/s por la Boca de la Barra, con una salinidad media de 21.38 PSU (máxima de 27.6) y se rellena 4.28 mm al año; el río grande llega al mar con 6 814 m³/s, 615 mg/L y 139.8 Mt de sedimento al año; el mar tiene olas de H_s = 1.47 m y T_p = 5.84 s; la bahía deja entrar 1.10 m de oleaje y la playa gana 0.50 m al año. Al mar llegan 7 069 m³/s de agua dulce (222.9 km³ al año) y el agua de la laguna tarda en promedio 26.1 años en llegar.
+Año normal, horizonte 2026 y ningún eslabón intervenido. La laguna rebosa 106.9 L/s al lago (tiempo de residencia de 38.3 días); el lago, con su cuenca, su lluvia, su evaporación y su toma, desagua 1.40 m³/s al río (8.4 % más que sin la laguna) y retiene el agua 26.0 años; el río lleva 7.79 m³/s a la ciénaga (6.37 de su cuenca y 1.40 del lago), con 823 mg/L de sedimento y 43.0 µg/L de fósforo, y tarda 16.6 horas en recorrer sus tres zonas. La ciénaga toma del río grande 74.9 m³/s por los caños en la creciente y le devuelve 2.55 m³/s en el estiaje (47 días del año, en abril y mayo); saca 251.5 m³/s por la Boca de la Barra, con una salinidad media de 22.42 PSU (máxima de 32.7) y se rellena 4.11 mm al año; el río grande llega al mar con 6 742 m³/s (72 m³/s menos por lo que le toma la ciénaga en neto), 616 mg/L y 139.9 Mt de sedimento al año; el mar tiene olas de H_s = 1.47 m y T_p = 5.84 s; la bahía deja entrar 1.10 m de oleaje y la playa gana 0.50 m al año. Al mar llegan 6 993 m³/s de agua dulce (220.5 km³ al año) y el agua de la laguna tarda en promedio 26.2 años en llegar. En la Serranía de Macuira el bosque de niebla recibe 804 mm de niebla al año.
 
-El lazo de la costa converge en 2 iteraciones (errores de 3.7·10⁻³ y 0). Con los trazadores, el agua de la ciénaga es 39.9 % del río grande, 40.4 % del mar, 19.7 % de lluvia y ríos locales y 0.012 % de la laguna del páramo; frente a las bocas, el agua de la laguna es 1.0·10⁻⁴ %, y la salinidad que dan los trazadores (27.85 PSU) coincide con la del océano (27.97 PSU). det(I − M) = 0.99558. Los 78 criterios de los siete simuladores se cumplen.
+El lazo de la costa converge en 5 iteraciones (errores de 1.1·10⁻², 6.6·10⁻³, 1.4·10⁻⁴, 3.0·10⁻⁶ y 6.6·10⁻⁸): la ciénaga y el delta se dan agua en los dos sentidos por los caños. Con los trazadores, el agua de la ciénaga es 38.8 % del río grande, 41.4 % del mar, 19.8 % de lluvia y ríos locales y 0.012 % de la laguna del páramo; frente a las bocas, el agua de la laguna es 1.0·10⁻⁴ %, y la salinidad que dan los trazadores (27.93 PSU) coincide con la del océano (28.04 PSU). det(I − M) = 0.99548. Los 81 criterios de los siete simuladores se cumplen.
 
 ## Pestañas
 
@@ -88,17 +88,17 @@ El lazo de la costa converge en 2 iteraciones (errores de 3.7·10⁻³ y 0). Con
 
 | Escenario | Criterios que se cumplen | Lo que se ve |
 |---|---|---|
-| Del páramo al mar hoy | 78 de 78 | Escenario base |
-| El Niño en toda la cadena | 57 de 78 | El lago deja de desaguar (−100 %), el río baja 46.3 % y la bocatoma se queda sin agua dos meses; la ciénaga sube a 32.1 PSU; el arrecife llega a 5.3 °C·semana; la playa pierde arena |
-| La Niña en toda la cadena | 74 de 78 | El lago desagua 3.20 m³/s; la ciénaga se rellena 6.92 mm/año; la pluma del río grande llega al arrecife |
-| Cuencas intervenidas | 68 de 78 | Páramo degradado, cebolla en la cuenca del lago, aguas residuales en el río y cuenca del río grande deforestada |
-| Más agua para las ciudades | 73 de 78 | El lago casi no desagua (0.01 m³/s): el agua de la laguna en el mar baja a 4.6·10⁻⁷ % |
-| Represas en la cuenca del río grande | 73 de 78 | El río grande trae 35.0 Mt/año: a la playa llega una cuarta parte de la arena y se erosiona |
-| Restauración | 77 de 78 | Con los caños dragados la ciénaga baja a 15.25 PSU pero recibe más lodo del río grande (8.12 mm/año) |
-| Horizonte 2050 | 76 de 78 | El mar sube 10.2 cm (5.2 mm/año) |
-| Horizonte 2100 con muchas emisiones | 70 de 78 | El mar sube 68.2 cm (15.1 mm/año): los palafitos se inundan, la llanura del delta queda a 41 años del mar y la playa retrocede 40.1 m en 50 años |
-| El Niño en 2100 con muchas emisiones | 53 de 78 | Las dos presiones juntas |
-| Proyectos sin conectar | 78 de 78 | Cada simulador con sus propios valores de referencia |
+| Del páramo al mar hoy | 81 de 81 | Escenario base |
+| El Niño en toda la cadena | 59 de 81 | El lago deja de desaguar (−100 %), el río baja 46.3 % y la bocatoma se queda sin agua dos meses; la ciénaga le devuelve agua al río grande 123 días (de marzo a julio) y sube a 37.1 PSU; el arrecife llega a 5.3 °C·semana; la niebla de Macuira baja a 610 mm; la playa pierde arena |
+| La Niña en toda la cadena | 77 de 81 | El lago desagua 3.20 m³/s; el río grande entra a la ciénaga todo el año y la rellena 7.67 mm/año; la pluma del río grande llega al arrecife |
+| Cuencas intervenidas | 71 de 81 | Páramo degradado, cebolla en la cuenca del lago, aguas residuales en el río y cuenca del río grande deforestada |
+| Más agua para las ciudades | 76 de 81 | El lago casi no desagua (0.01 m³/s): el agua de la laguna en el mar baja a 4.6·10⁻⁷ % |
+| Represas en la cuenca del río grande | 76 de 81 | El río grande trae 35.0 Mt/año: a la playa llega una cuarta parte de la arena y se erosiona |
+| Restauración | 80 de 81 | Con los caños dragados la ciénaga recibe 154.3 m³/s del río grande (y le devuelve 6.1 m³/s en el estiaje), baja a 17.63 PSU de media pero recibe más lodo (7.62 mm/año) |
+| Horizonte 2050 | 80 de 81 | El mar sube 10.2 cm (5.2 mm/año); la ciénaga le devuelve agua al río 66 días al año |
+| Horizonte 2100 con muchas emisiones | 72 de 81 | El mar sube 68.2 cm (15.1 mm/año): los palafitos se inundan, la ciénaga le devuelve agua al río 115 días, la llanura del delta queda a 41 años del mar, la playa retrocede 40.1 m en 50 años y la base de las nubes de Macuira sube a 706 m (488 mm de niebla) |
+| El Niño en 2100 con muchas emisiones | 54 de 81 | Las dos presiones juntas: la base de las nubes de Macuira sube a 800 m y la niebla cae a 327 mm |
+| Proyectos sin conectar | 81 de 81 | Cada simulador con sus propios valores de referencia |
 
 ## Datos y conexión
 

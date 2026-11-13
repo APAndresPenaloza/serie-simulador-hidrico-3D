@@ -94,6 +94,8 @@ export function indicadores(cad) {
     cienaga: {
       Q: s('cienagas').Q, S: s('cienagas').salinidad, Smax: num(Ci?.a?.Smax), Smin: num(Ci?.a?.Smin), tauDias: num(Ci?.tauDias), V: num(Ci?.V),
       P: s('cienagas').fosforo, OD: s('cienagas').OD, sedMm: num(Ci?.sed?.mm), Qr: num(Ci?.a?.Qr), Qc: num(Ci?.a?.Qc), Qm: num(Ci?.a?.Qm), Qe: num(Ci?.a?.Qe),
+      QcIn: Number.isFinite(Ci?.a?.QcIn) ? Ci.a.QcIn : s('cienagas').Qtoma ?? NaN, QcOut: Number.isFinite(Ci?.a?.QcOut) ? Ci.a.QcOut : s('cienagas').Qretorno ?? NaN,
+      diasRet: num(Ci?.a?.diasRetorno), mesesRet: Ci?.a?.mesesRetorno ?? [],
       Qd: num(Ci?.a?.Qd), nivel: s('cienagas').nivel, salud: num(Ci?.saludPeor),
     },
     delta: {

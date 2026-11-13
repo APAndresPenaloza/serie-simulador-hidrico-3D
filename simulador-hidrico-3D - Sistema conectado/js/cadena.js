@@ -177,7 +177,7 @@ function flujosDe(id, nodo) {
   if (!r) return nodo.flujos ?? REFERENCIA[id]?.flujos ?? {};
   if (id === 'lagos') return { Qin: r.bal.Qin, Qexterno: r.bal.Qexterno };
   if (id === 'rios') return { Qcuenca: r.a.Qcuenca, Qlago: r.a.Qlago };
-  if (id === 'cienagas') return { Qd: r.a.Qd, Qm: r.a.Qm, Qr: r.a.Qr, Qc: r.a.Qc, Qe: r.a.Qe, Qrios: nodo.pn.Qrios };
+  if (id === 'cienagas') return { Qd: r.a.Qd, Qm: r.a.Qm, Qr: r.a.Qr, Qc: r.a.Qc, QcIn: r.a.QcIn, QcOut: r.a.QcOut, Qe: r.a.Qe, Qrios: nodo.pn.Qrios };
   if (id === 'oceanos') return { Qoc: r.pl.V / (nodo.pn.renovacion * 86400) };
   return {};
 }
@@ -289,6 +289,10 @@ export function calcularCadena(mods, p, { maxIter = 12, tol = 1e-6 } = {}) {
  * En cada cuerpo bien mezclado:  f_i = Σ_j m_ij·f_j + b_i   →   (I − M)·F = B
  * m_ij: parte del agua que entra al cuerpo i que viene del cuerpo j; b_i: parte que viene
  * directamente de cada fuente. Cada fila de [M | B] suma 1, así que cada fila de F también.
+ * La ciénaga y el delta se dan agua en los dos sentidos: el río grande entra a la ciénaga por
+ * los caños en la creciente (b de la ciénaga) y la ciénaga le devuelve agua al río en el
+ * estiaje (m del delta que viene de la ciénaga), así que hay dos ciclos: ciénaga ⇄ mar y
+ * ciénaga → delta → mar → ciénaga.
  */
 export const CUERPOS_TRAZADOR = ['lagunas', 'lagos', 'rios', 'cienagas', 'deltas', 'mar'];
 export const FUENTES = [
@@ -312,8 +316,11 @@ export function trazadores(nodos) {
   // Río: el lago por la cabecera y la escorrentía de su cuenca
   const QinR = Math.max(1e-9, (R.Qcuenca ?? 0) + (R.Qlago ?? 0));
   const mRK = (R.Qlago ?? 0) / QinR;
-  // Ciénaga: ríos (el de la cadena es una parte), caños del río grande, lluvia y mar
-  const Qll = Math.max(0, C.Qd - C.Qr - Math.max(0, C.Qc));
+  // Ciénaga: ríos (el de la cadena es una parte), lo que entra del río grande por los caños,
+  // lluvia y mar
+  const QcIn = C.QcIn ?? Math.max(0, C.Qc ?? 0);
+  const QcOut = C.QcOut ?? Math.max(0, -(C.Qc ?? 0));
+  const Qll = Math.max(0, C.Qd - C.Qr - QcIn);
   const QinC = Math.max(1e-9, C.Qd + C.Qm);
   const nuestro = C.Qrios > 0 ? Math.min(1, QR / C.Qrios) : 0;
   const mCR = (nuestro * C.Qr) / QinC;
@@ -322,6 +329,8 @@ export function trazadores(nodos) {
   const QinX = QD + QCout + O.Qoc;
   const mXC = QCout / QinX;
   const mXD = QD / QinX;
+  // Delta: el río grande y el agua que la ciénaga le devuelve por los caños
+  const mDC = QD > 0 ? Math.min(1, QcOut / QD) : 0;
   const n = CUERPOS_TRAZADOR.length;
   const M = identidad(n).map((f) => f.map(() => 0));
   const [iL, iK, iR, iC, iD, iX] = [0, 1, 2, 3, 4, 5];
@@ -331,19 +340,20 @@ export function trazadores(nodos) {
   M[iC][iX] = mCX;
   M[iX][iC] = mXC;
   M[iX][iD] = mXD;
+  M[iD][iC] = mDC;
   const B = [
     [1, 0, 0, 0],
     [0, 0, 0, 1 - mKL],
     [0, 0, 0, 1 - mRK],
-    [0, Math.max(0, C.Qc) / QinC, 0, ((1 - nuestro) * C.Qr + Qll) / QinC],
-    [0, 1, 0, 0],
+    [0, QcIn / QinC, 0, ((1 - nuestro) * C.Qr + Qll) / QinC],
+    [0, 1 - mDC, 0, 0],
     [0, 0, O.Qoc / QinX, 0],
   ];
   const IM = identidad(n).map((f, i) => f.map((x, j) => x - M[i][j]));
   const { X, det, operaciones } = gaussJordan(IM, B);
   return {
     M, B, IM, F: X, det, operaciones,
-    flujos: { QL, QinK, QinR, QinC, QinX, Qll, QD, QR, QCout, Qoc: O.Qoc, Qm: C.Qm, Qc: C.Qc, Qr: C.Qr, Qe: C.Qe, nuestro, Qlago: R.Qlago, Qcuenca: R.Qcuenca, Qext: K.Qexterno },
+    flujos: { QL, QinK, QinR, QinC, QinX, Qll, QD, QR, QCout, Qoc: O.Qoc, Qm: C.Qm, Qc: C.Qc, QcIn, QcOut, mDC, Qr: C.Qr, Qe: C.Qe, nuestro, Qlago: R.Qlago, Qcuenca: R.Qcuenca, Qext: K.Qexterno },
   };
 }
 

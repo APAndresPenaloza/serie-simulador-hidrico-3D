@@ -85,3 +85,25 @@ test('Cuadrática, exponencial y logarítmica: nivel del mar y carbono', () => {
   assert.equal(M.calcificacion(2.5), 'marginal');
   assert.equal(M.calcificacion(1.5), 'crítica');
 });
+
+test('Bosque de niebla: punto de rocío, base de las nubes, agua de la nube y niebla atrapada', () => {
+  // Magnus con 27 °C y 78 %: γ = ln 0.78 + 17.625 × 27/270.04 = 1.513778; T_d = 243.04·γ/(17.625 − γ) = 22.836 °C
+  cerca(M.puntoRocio(27, 78), 22.8355, 1e-3);
+  // Con el aire saturado el punto de rocío es la temperatura
+  cerca(M.puntoRocio(25, 100), 25, 1e-9);
+  // Más seco, más bajo el punto de rocío
+  assert.ok(M.puntoRocio(27, 60) < M.puntoRocio(27, 80));
+  // Base de las nubes: 125 m por cada grado de diferencia
+  cerca(M.baseNubes(27, 22), 625, 1e-9);
+  assert.equal(M.baseNubes(20, 20), 0);
+  // Por tramos: 9.8 °C/km bajo la base y 6 °C/km dentro de la nube: 27 − 4.9 − 3 = 19.1 °C a 1 000 m
+  cerca(M.temperaturaAltura(1000, 27, 500), 19.1, 1e-12);
+  cerca(M.temperaturaAltura(300, 27, 500), 27 - 0.0098 * 300, 1e-12);
+  // Agua líquida: 0 bajo la base, 0.0004 g/m³ por metro, tope de 0.25 g/m³
+  assert.equal(M.aguaLiquida(400, 500, 0.0004, 0.25), 0);
+  cerca(M.aguaLiquida(700, 500, 0.0004, 0.25), 0.08, 1e-12);
+  assert.equal(M.aguaLiquida(2000, 500, 0.0004, 0.25), 0.25);
+  // F = η·LWC·U = 0.2 × 0.1 g/m³ × 8 m/s = 0.16 g/(m²·s) → 13.824 L por m² de malla en un día
+  cerca(M.flujoNiebla(0.2, 0.1, 8), 0.16, 1e-12);
+  cerca(M.litrosPorM2(0.16, 86400), 13.824, 1e-9);
+});

@@ -20,6 +20,7 @@ const TABS = [
   { id: 'olas', nombre: 'Olas', graficas: 2, intro: 'Los alisios soplan sobre el Caribe casi todo el año y levantan las olas: si el viento sopla el tiempo suficiente sobre una distancia grande, el mar llega a un estado de equilibrio que solo depende de la velocidad del viento. Las olas guardan energía y la llevan hasta la costa; sus alturas no son todas iguales sino que siguen una distribución de probabilidad.' },
   { id: 'mareas', nombre: 'Mareas', graficas: 2, intro: 'La marea es la suma de ondas con períodos que fijan la Luna y el Sol. En el Caribe es pequeña y mixta, principalmente diurna. Cuando dos ondas de períodos parecidos se suman, unas veces se refuerzan y otras se cancelan: así aparecen las semanas de marea grande y de marea pequeña.' },
   { id: 'viento', nombre: 'Viento y corrientes', graficas: 2, intro: 'Por la rotación de la Tierra, el agua que empuja el viento no va en la misma dirección que el viento: en el hemisferio norte se desvía a la derecha. Frente a La Guajira los alisios soplan paralelos a la costa y el agua de la superficie se va mar afuera; para reemplazarla sube agua fría y rica en nutrientes desde el fondo: es el afloramiento, que hace de esa costa una de las más productivas en pesca.' },
+  { id: 'niebla', nombre: 'Bosque de niebla', graficas: 2, tablas: true, intro: 'En la punta de La Guajira, en medio del desierto, la Serranía de Macuira (Parque Nacional Natural desde 1977, unas 25 000 ha en el resguardo wayuu; cerro Palúa, 867 m) tiene un bosque de niebla desde los 550 m. Los alisios traen aire húmedo del mar: al subir por la serranía se enfría hasta su punto de rocío y forma nubes que envuelven las cumbres. El bosque atrapa el agua de esas nubes con sus hojas, musgos y bromelias: en 1985 recibió casi tanta agua de la niebla (796 mm) como de la lluvia (853 mm). Con mallas (atrapanieblas) se puede recoger esa agua para las comunidades wayuu. Si el aire se calienta y se seca, la base de las nubes sube y el bosque queda por debajo de ella.' },
   { id: 'temperatura', nombre: 'Temperatura y coral', graficas: 2, tablas: true, intro: 'El mar del Caribe es cálido arriba y frío abajo: entre las dos capas está la termoclina. Los corales viven cerca de su límite: cuando el agua pasa más de 1 °C su máxima media mensual durante semanas, expulsan las algas que les dan color y alimento, y se blanquean. El calor acumulado se mide en grados-semana (DHW).' },
   { id: 'salinidad', nombre: 'Salinidad y densidad', graficas: 2, intro: 'El Magdalena entrega al mar miles de metros cúbicos de agua dulce por segundo. Frente a la boca forma una capa menos salada que flota sobre el mar. La densidad del agua de mar baja con la temperatura y sube con la sal; las diferencias de densidad estratifican el océano.' },
   { id: 'nivel', nombre: 'Nivel del mar', graficas: 2, intro: 'El nivel del mar sube porque el agua se dilata al calentarse y porque se derrite el hielo de los glaciares y de Groenlandia y la Antártida. Hoy sube unos 3 a 4 mm al año y cada vez más rápido: la curva es una parábola. Ese nivel es el que reciben la ciénaga, el delta y la playa.' },
@@ -29,8 +30,8 @@ const TABS = [
 const CONTROLES = [
   { tab: 'olas', grupo: 'Escenario' },
   { tab: 'olas', id: 'escenario', clave: 'escenario', etiqueta: 'Escenario', tipo: 'opciones', opciones: opciones(S.ESCENARIOS), escribir: () => {}, alCambiar: (v, p, sim, ctx) => ctx.aplicarEscenario(v),
-    doc: 'Pone a la vez los valores de un caso de estudio: El Niño, La Niña, alisios más fuertes, una gran creciente del Magdalena o los años 2050 y 2100.' },
-  { tab: 'olas', id: 'clima', clave: 'clima', etiqueta: 'Clima del año', tipo: 'opciones', opciones: opciones(S.CLIMAS), extra: (v) => `Temperatura ${conSigno(S.CLIMAS[v].dT, 1)} °C, viento × ${fmt(S.CLIMAS[v].fU, 2)}.` },
+    doc: 'Pone a la vez los valores de un caso de estudio: El Niño, La Niña, alisios más fuertes, una gran creciente del Magdalena, menos niebla en Macuira o los años 2050 y 2100.' },
+  { tab: 'olas', id: 'clima', clave: 'clima', etiqueta: 'Clima del año', tipo: 'opciones', opciones: opciones(S.CLIMAS), extra: (v) => `Temperatura ${conSigno(S.CLIMAS[v].dT, 1)} °C, viento × ${fmt(S.CLIMAS[v].fU, 2)}, humedad del aire ${conSigno(S.CLIMAS[v].dHR, 0)} %.` },
   { tab: 'olas', grupo: 'Los alisios' },
   { tab: 'olas', id: 'U0', clave: 'U0', etiqueta: 'Velocidad media del viento', unidad: 'm/s', min: 1, max: 20, paso: 0.1, dec: 1 },
   { tab: 'olas', id: 'Ua', clave: 'Ua', etiqueta: 'Variación con la temporada (máximo a comienzos de febrero)', unidad: 'm/s', min: 0, max: 8, paso: 0.1, dec: 1 },
@@ -47,6 +48,21 @@ const CONTROLES = [
   { tab: 'viento', id: 'Az', clave: 'Az', etiqueta: 'Viscosidad turbulenta vertical', unidad: 'm²/s', min: 0.001, max: 0.1, paso: 0.001, dec: 3 },
   { tab: 'viento', id: 'anchoAfloramiento', clave: 'anchoAfloramiento', etiqueta: 'Ancho de la franja de afloramiento', unidad: 'km', min: 5, max: 100, paso: 1, dec: 0 },
   { tab: 'viento', id: 'enfriamiento', clave: 'enfriamiento', etiqueta: 'Enfriamiento por cada m/día de afloramiento', unidad: '°C', min: 0, max: 0.5, paso: 0.01, dec: 2 },
+
+  { tab: 'niebla', grupo: 'El aire que traen los alisios' },
+  { tab: 'niebla', id: 'HR', clave: 'HR', etiqueta: 'Humedad relativa media del aire', unidad: '%', min: 50, max: 98, paso: 0.5, dec: 1, extra: (v, p, r) => `Ahora ${fmt(r.mac.aire.HR, 1)} % con ${fmt(r.mac.aire.T, 1)} °C: punto de rocío ${fmt(r.mac.aire.Td, 1)} °C.`, doc: 'Sube 10 % en la madrugada y baja 10 % en la tarde; también cambia con la temporada.' },
+  { tab: 'niebla', id: 'HRa', clave: 'HRa', etiqueta: 'Variación con la temporada (máxima en octubre)', unidad: '%', min: 0, max: 15, paso: 0.5, dec: 1 },
+  { tab: 'niebla', id: 'dHRcal', clave: 'dHRcal', etiqueta: 'Humedad que se pierde por cada °C de calentamiento', unidad: '%/°C', min: 0, max: 5, paso: 0.1, dec: 1, doc: 'Con el calentamiento global el aire se seca y la base de las nubes sube (Still et al., 1999).' },
+  { tab: 'niebla', grupo: 'El bosque de niebla' },
+  { tab: 'niebla', id: 'etaBosque', clave: 'etaBosque', etiqueta: 'Parte de la niebla que atrapa el bosque', unidad: '', min: 0, max: 0.3, paso: 0.001, dec: 3, doc: 'Eficiencia del dosel por metro cuadrado de suelo (hojas, musgos, bromelias y epífitas).' },
+  { tab: 'niebla', id: 'lluviaMacuira', clave: 'lluviaMacuira', etiqueta: 'Lluvia del año en la serranía', unidad: 'mm', min: 0, max: 3000, paso: 10, dec: 0 },
+  { tab: 'niebla', grupo: 'Atrapanieblas para una comunidad wayuu' },
+  { tab: 'niebla', id: 'nAtrapa', clave: 'nAtrapa', etiqueta: 'Número de atrapanieblas', unidad: '', min: 0, max: 40, paso: 1, dec: 0 },
+  { tab: 'niebla', id: 'areaMalla', clave: 'areaMalla', etiqueta: 'Área de malla de cada uno', unidad: 'm²', min: 1, max: 200, paso: 1, dec: 0, doc: 'Un atrapanieblas grande es una malla de 12 m × 4 m (48 m²).' },
+  { tab: 'niebla', id: 'etaMalla', clave: 'etaMalla', etiqueta: 'Eficiencia de la malla', unidad: '', min: 0.05, max: 0.5, paso: 0.01, dec: 2, doc: 'Malla Raschel: atrapa cerca de la quinta parte del agua de la niebla que la atraviesa.' },
+  { tab: 'niebla', id: 'zAtrapa', clave: 'zAtrapa', etiqueta: 'Altura de los atrapanieblas', unidad: 'm', min: 100, max: 860, paso: 10, dec: 0, doc: 'Más arriba hay más agua líquida en la nube y más horas de niebla.' },
+  { tab: 'niebla', id: 'personas', clave: 'personas', etiqueta: 'Personas de la comunidad', unidad: '', min: 1, max: 500, paso: 1, dec: 0 },
+  { tab: 'niebla', id: 'litrosPersona', clave: 'litrosPersona', etiqueta: 'Agua por persona al día', unidad: 'L', min: 5, max: 100, paso: 1, dec: 0 },
 
   { tab: 'temperatura', grupo: 'Temperatura del mar' },
   { tab: 'temperatura', id: 'Tmedia', clave: 'Tmedia', etiqueta: 'Temperatura media de la superficie', unidad: '°C', min: 20, max: 32, paso: 0.1, dec: 1 },
@@ -83,6 +99,7 @@ function estados(p, r) {
     { id: 'olas', nombre: 'Olas', nivel: r.q.Hs <= 4 ? 'ok' : 'aviso', texto: `Olas: H_s ${fmt(r.q.Hs, 2)} m, T ${fmt(r.q.Tp, 1)} s` },
     { id: 'coral', nombre: 'Coral', nivel: NIVEL_ALERTA[r.alerta.nivel], texto: `Arrecife: ${fmt(r.T, 2)} °C, ${r.alerta.nombre}` },
     { id: 'afloramiento', nombre: 'Afloramiento', nivel: 'ok', texto: `La Guajira: ${fmt(r.Tg, 2)} °C (afloramiento de ${fmt(r.q.wDia, 1)} m/día)` },
+    { id: 'niebla', nombre: 'Bosque de niebla', nivel: r.a.niebla >= 500 ? 'ok' : 'alerta', texto: `Macuira: nubes desde ${miles(r.mac.aire.zb)} m · ${miles(r.a.niebla)} mm de niebla al año` },
     { id: 'nivel', nombre: 'Nivel del mar', nivel: r.fu.nivel <= 300 ? 'ok' : 'aviso', texto: `Mar en ${p.anoHorizonte}: ${conSigno(r.fu.nivel / 10, 1)} cm` },
     { id: 'ph', nombre: 'pH', nivel: r.fu.Om >= 3 ? 'ok' : 'alerta', texto: `pH ${fmt(r.fu.pH, 3)}, aragonito ${fmt(r.fu.Om, 2)}` },
   ];
@@ -199,6 +216,70 @@ const PINTORES = {
         { xTitulo: 'Mes', yTitulo: 'Temperatura (°C)', formatoX: fmtMes, formatoY: (v) => fmt(v, 0), marcasX: MARCAS_MES,
           series: [serieLinea('Mar adentro', a.meses.map((m, k) => ({ x: k + 1, y: m.T })), c.alerta), serieLinea('La Guajira (afloramiento)', a.meses.map((m, k) => ({ x: k + 1, y: m.Tg })), c.agua), serieLinea('Afloramiento (m/día ÷ 4 + 20)', a.meses.map((m, k) => ({ x: k + 1, y: 20 + m.wDia / 4 })), c.tinta2, { punteada: true, ancho: 1 })],
           limites: { x: { min: 1, max: 12 }, y: { min: 20, max: 32 } }, pie: 'Con los alisios fuertes de febrero sube el agua fría frente a La Guajira.' },
+      ],
+    };
+  },
+
+  niebla({ p, r, c }) {
+    const a = r.a, mac = r.mac, aire = mac.aire, nb = mac.nb;
+    const { zBosque, zCima } = S.SITIO.macuira;
+    const d = r.q.d;
+    const dia = muestrear((h) => S.aireMacuira(p, d, h, r.Tg).zb, 0, 24, 97);
+    const enNube = aire.zb < zCima;
+    const espesor = Math.max(0, zCima - aire.zb);
+    const xMes = (k) => k + 1;
+    const nombreMes = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+    return {
+      metricas: [
+        ['<b>El aire de los alisios ahora</b>', '', ''],
+        ['Temperatura del aire en la costa', aire.T, '°C', '', 1, 'Mar de La Guajira + 0.5 °C, con el ciclo del día.'],
+        ['Humedad relativa', aire.HR, '%', '', 1],
+        ['Punto de rocío (Magnus)', aire.Td, '°C', '', 2, 'T_d = b·γ/(a − γ), γ = ln(HR/100) + a·T/(b + T).'],
+        ['Base de las nubes', aire.zb, 'm', aire.zb <= zBosque ? 'ok' : (enNube ? '' : 'aviso'), 0, 'z_b = 125·(T − T_d).'],
+        ['La cima (cerro Palúa, 867 m)', enNube ? 'dentro de la nube' : 'sobre la base de las nubes, sin niebla', ''],
+        ['Espesor de nube sobre la serranía', espesor, 'm', '', 0],
+        ['Parte del bosque dentro de la nube', 100 * nb.dentro, '%', '', 0, 'Del límite del bosque (550 m) a la cima.'],
+        ['Temperatura en la cima', mac.Tcima, '°C', '', 1, 'Adiabática seca bajo la base y húmeda dentro de la nube.'],
+        ['Agua líquida de la nube en el bosque', nb.lwcBosque, 'g/m³', '', 3],
+        ['Viento de los alisios', r.q.U, 'm/s', '', 1],
+        ['Niebla que atrapa el bosque a este ritmo', mac.mmDia, 'mm/día', '', 2, 'η·LWC·U por m² de suelo.'],
+        ['<b>El año en Macuira</b>', '', ''],
+        ['Agua de niebla del año', a.niebla, 'mm', a.niebla >= 500 ? 'ok' : 'alerta', 0],
+        ['Lluvia del año', a.lluvia, 'mm', '', 0],
+        ['Parte del agua del bosque que viene de la niebla', 100 * a.pctNiebla, '%', '', 0],
+        ['Base media de las nubes', a.zb, 'm', '', 0],
+        ['Horas del año con la cima en la nube', a.hCima, 'h', '', 0, `${fmt(100 * a.hCima / 8760, 0)} % del año.`],
+        ['Horas con todo el bosque en la nube', a.hBosque, 'h', '', 0, `${fmt(100 * a.hBosque / 8760, 0)} % del año: la base de las nubes por debajo de 550 m.`],
+        ['<b>Atrapanieblas</b>', '', ''],
+        ['Agua por m² de malla ahora', mac.litrosM2Dia, 'L/(m²·día)', '', 2],
+        ['Agua por m² de malla en el año', a.litros, 'L/(m²·día)', '', 2],
+        ['Malla instalada', mac.malla, 'm²', '', 0],
+        ['Agua de los atrapanieblas (media del año)', mac.aguaAno, 'L/día', '', 0, `Alcanza para ${fmt(mac.personasAno, 0)} personas a ${fmt(p.litrosPersona, 0)} L por día.`],
+        [`Agua en el mes de menos niebla (${nombreMes[a.mesPeorNiebla]})`, mac.aguaPeor, 'L/día', mac.aguaPeor >= mac.demanda ? 'ok' : 'aviso', 0, `Lo que necesita la comunidad: ${miles(mac.demanda)} L/día.`],
+      ],
+      tablas: tablaHTML('La niebla y la lluvia en la Serranía de Macuira', ['Mes', 'Viento (m/s)', 'Mar (°C)', 'Base de nubes (m)', 'Horas con la cima en la nube', 'Niebla (mm)', 'Lluvia (mm)', 'Atrapanieblas (L/m²·día)'], a.meses.map((m, k) => [m.mes, fmt(m.U, 1), fmt(m.Tg, 1), { v: miles(m.zb), clase: m.zb > zBosque + 100 ? 'mal' : '' }, miles(m.hCima), fmt(m.niebla, 0), fmt(m.lluvia, 0), { v: fmt(m.litros, 2), clase: k === a.mesPeorNiebla ? 'mal' : '' }]), { numericas: [1, 2, 3, 4, 5, 6, 7], nota: 'Medias de cada mes; la base de las nubes cambia hora por hora (más baja en la madrugada). Bosque de niebla desde 550 m; cerro Palúa, 867 m.' }),
+      ecuacion: [
+        ecu.tipo('Logarítmica y racional: el punto de rocío (Magnus)'),
+        ecu.formula(`γ = ln(HR/100) + ${i('a')}·${i('T')}/(${i('b')} + ${i('T')}),  ${sub('T', 'd')} = ${i('b')}·γ/(${i('a')} − γ),  ${i('a')} = 17.625, ${i('b')} = 243.04 °C`),
+        ecu.sust(`γ = ln(${fmt(aire.HR / 100, 3)}) + 17.625 × ${fmt(aire.T, 2)}/(243.04 + ${fmt(aire.T, 2)}) = ${fmt(Math.log(aire.HR / 100) + (17.625 * aire.T) / (243.04 + aire.T), 4)} → ${sub('T', 'd')} = ${fmt(aire.Td, 2)} °C`),
+        ecu.tipo('Lineal: la base de las nubes'),
+        ecu.formula(`${sub('z', 'b')} = 125·(${i('T')} − ${sub('T', 'd')}) = 125 × (${fmt(aire.T, 2)} − ${fmt(aire.Td, 2)}) = ${miles(aire.zb)} m`),
+        ecu.nota('El aire que sube se enfría 9.8 °C por kilómetro y su punto de rocío solo 1.8: se encuentran a unos 125 m por cada grado de diferencia.'),
+        ecu.tipo('Por tramos: la temperatura del aire que sube'),
+        ecu.formula(`${i('T')}(${i('z')}) = ${i('T')} − 0.0098·${i('z')} si ${i('z')} ≤ ${sub('z', 'b')};  ${i('T')} − 0.0098·${sub('z', 'b')} − 0.006·(${i('z')} − ${sub('z', 'b')}) si ${i('z')} > ${sub('z', 'b')}  →  ${i('T')}(867 m) = ${fmt(mac.Tcima, 1)} °C`),
+        ecu.tipo('Por tramos: agua líquida de la nube'),
+        ecu.formula(`LWC(${i('z')}) = mín(${fmt(S.SITIO.LWCmax, 2)}, máx(0, ${fmt(S.SITIO.gradLWC, 4)}·(${i('z')} − ${sub('z', 'b')}))) g/m³`),
+        ecu.tipo('Producto: el agua que atrapan el bosque y la malla'),
+        ecu.formula(`${i('F')} = η·LWC·${i('U')} = ${fmt(p.etaMalla, 2)} × ${fmt(nb.lwcAtrapa, 3)} × ${fmt(r.q.U, 1)} = ${fmt(nb.Fmalla, 4)} g/(m²·s) = ${fmt(mac.litrosM2Dia, 2)} L/(m²·día) en la malla`),
+        ecu.sust(`Bosque: η = ${fmt(p.etaBosque, 3)} → ${fmt(mac.mmDia, 2)} mm/día; en el año ${miles(a.niebla)} mm de niebla y ${miles(a.lluvia)} mm de lluvia (${fmt(100 * a.pctNiebla, 0)} % de niebla).`),
+      ].join(''),
+      graficas: [
+        { xTitulo: 'Hora del día', yTitulo: 'Altura (m)', formatoX: (v) => `${fmt(v, 0)} h`, formatoY: (v) => miles(v), marcasX: [0, 3, 6, 9, 12, 15, 18, 21, 24],
+          series: [serieLinea('Base de las nubes hoy', dia, c.agua, { relleno: false }), serieGuia('Cima (cerro Palúa, 867 m)', { x: 0, y: zCima }, { x: 24, y: zCima }, c.tinta2), serieGuia('Límite del bosque de niebla (550 m)', { x: 0, y: zBosque }, { x: 24, y: zBosque }, c.ok), serieGuia('Atrapanieblas', { x: 0, y: p.zAtrapa }, { x: 24, y: p.zAtrapa }, c.ocre, { punteada: true, ancho: 1 }), seriePuntos('Ahora', [{ x: r.hora, y: aire.zb }], c.alerta)],
+          limites: { x: { min: 0, max: 24 }, y: { min: 0, max: 1200, paso: 300 } }, pie: 'De noche el aire se enfría, se humedece y la base de las nubes baja: el bosque queda dentro de la nube. En la tarde sube.' },
+        { xTitulo: 'Mes', yTitulo: 'Agua (mm al mes)', formatoX: fmtMes, formatoY: (v) => fmt(v, 0), marcasX: MARCAS_MES,
+          series: [serieLinea('Niebla que atrapa el bosque', a.meses.map((m, k) => ({ x: xMes(k), y: m.niebla })), c.agua, { relleno: true, colorRelleno: 'rgba(28, 134, 184, 0.30)' }), serieLinea('Lluvia', a.meses.map((m, k) => ({ x: xMes(k), y: m.lluvia })), c.ok), serieLinea('Atrapanieblas (L/m²·día × 5)', a.meses.map((m, k) => ({ x: xMes(k), y: 5 * m.litros })), c.ocre, { punteada: true })],
+          limites: { x: { min: 1, max: 12 }, y: { min: 0 } }, pie: 'De diciembre a abril casi no llueve, pero los alisios fuertes traen la niebla: el bosque vive de ella en la temporada seca.' },
       ],
     };
   },
@@ -372,8 +453,10 @@ iniciarSimulador({
       { clave: 'T', nombre: 'Temperatura del arrecife', unidad: '°C', dec: 2 },
       { clave: 'Tg', nombre: 'Temperatura en La Guajira', unidad: '°C', dec: 2 },
       { clave: 'DHW', nombre: 'Calor acumulado (DHW)', unidad: '°C·semana', dec: 2 },
+      { clave: 'zb', nombre: 'Base de las nubes en Macuira', unidad: 'm', dec: 0 },
+      { clave: 'niebla', nombre: 'Niebla en el bosque (a este ritmo)', unidad: 'mm/día', dec: 2 },
     ],
-    tomar: (p, r) => ({ U: r.q.U, Hs: r.q.Hs, eta: r.q.eta, T: r.T, Tg: r.Tg, DHW: r.DHW }),
+    tomar: (p, r) => ({ U: r.q.U, Hs: r.q.Hs, eta: r.q.eta, T: r.T, Tg: r.Tg, DHW: r.DHW, zb: r.mac.aire.zb, niebla: r.mac.mmDia }),
   },
   hojasExcel,
   nodo: N,
@@ -383,5 +466,6 @@ iniciarSimulador({
     { id: 'columna', nombre: 'Columna', titulo: 'Corte del océano: termoclina y espiral de Ekman' },
     { id: 'guajira', nombre: 'La Guajira', titulo: 'El afloramiento de agua fría' },
     { id: 'arrecife', nombre: 'Arrecife', titulo: 'El arrecife de coral' },
+    { id: 'macuira', nombre: 'Macuira', titulo: 'La Serranía de Macuira y su bosque de niebla' },
   ],
 });

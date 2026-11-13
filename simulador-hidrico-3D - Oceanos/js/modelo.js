@@ -26,6 +26,11 @@
  *                      de la temperatura del mar.
  *  11. Por tramos    → alerta de blanqueamiento del coral (NOAA Coral Reef Watch) y estado de la
  *                      calcificación según el aragonito.
+ *  12. Bosque de niebla de la Serranía de Macuira → punto de rocío de Magnus (logarítmica y
+ *                      racional), base de las nubes z_b = 125·(T − T_d) (lineal), agua líquida de
+ *                      la nube por tramos, temperatura del aire que sube por tramos (adiabática
+ *                      seca y húmeda) y agua de niebla que atrapan el bosque y los atrapanieblas
+ *                      F = η·LWC·U.
  */
 
 export const G = 9.81;
@@ -127,3 +132,30 @@ export const hidrogeniones = (pH) => 10 ** -pH;
 export const aragonito = (pH, pH0, Om0) => Om0 * 10 ** (0.7 * (pH - pH0));
 /** Estado de la calcificación del coral por tramos según Ω. */
 export const calcificacion = (Om) => (Om >= 3.5 ? 'adecuada' : (Om >= 3 ? 'reducida' : (Om >= 2 ? 'marginal' : 'crítica')));
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 7. BOSQUE DE NIEBLA DE LA SERRANÍA DE MACUIRA
+// ═══════════════════════════════════════════════════════════════════════════
+/** Coeficientes de la fórmula de Magnus para el vapor sobre agua (Alduchov y Eskridge, 1996). */
+export const MAGNUS = { a: 17.625, b: 243.04 };
+/**
+ * Punto de rocío con la fórmula de Magnus: γ = ln(HR/100) + a·T/(b + T) y T_d = b·γ/(a − γ).
+ * Logarítmica (ln de la humedad) y racional (en T y en γ). T y T_d en °C, HR en %.
+ */
+export function puntoRocio(T, HR) {
+  const g = Math.log(Math.min(100, Math.max(1, HR)) / 100) + (MAGNUS.a * T) / (MAGNUS.b + T);
+  return (MAGNUS.b * g) / (MAGNUS.a - g);
+}
+/**
+ * Base de las nubes: el aire que sube se enfría unos 9.8 °C/km y su punto de rocío solo unos
+ * 1.8 °C/km, así que se satura a z_b ≈ 125·(T − T_d) metros (Lawrence, 2005). Lineal.
+ */
+export const baseNubes = (T, Td) => Math.max(0, 125 * (T - Td));
+/** Temperatura del aire que sube (por tramos): adiabática seca bajo la base y húmeda dentro de la nube. */
+export const temperaturaAltura = (z, T0, zb, seca = 0.0098, humeda = 0.006) => (z <= zb ? T0 - seca * z : T0 - seca * zb - humeda * (z - zb));
+/** Agua líquida de la nube a la altura z (por tramos): 0 bajo la base, crece en línea recta y se satura [g/m³]. */
+export const aguaLiquida = (z, zb, gradiente, maximo) => Math.min(maximo, Math.max(0, gradiente * (z - zb)));
+/** Agua de niebla que atrapa una superficie de frente al viento: F = η·LWC·U [g/(m²·s)]. */
+export const flujoNiebla = (eta, LWC, U) => eta * LWC * U;
+/** Gramos por metro cuadrado en un tiempo dt (s) → litros por metro cuadrado (= mm). */
+export const litrosPorM2 = (F, dt) => (F * dt) / 1000;

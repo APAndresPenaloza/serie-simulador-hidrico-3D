@@ -63,5 +63,42 @@ export function hojasExcel(p, r) {
     filas: a.meses.map((m) => [m.mes, { v: m.U, dec: 2 }, { v: m.Mek, dec: 2 }, { v: m.wDia, dec: 1 }, { v: m.Hs, dec: 2 }, { v: m.Hsmax, dec: 2 }, { v: m.P / 1000, dec: 1 }, { v: m.T, dec: 2 }, { v: m.Tg, dec: 2 }, { v: m.dhw, dec: 2 }]),
     columnas: [10, 14, 24, 20, 14, 16, 16, 26, 28, 22],
   };
-  return [viento, carbono, ano];
+  const mac = r.mac, aire = mac.aire;
+  const niebla = {
+    nombre: 'Bosque de niebla',
+    descripcion: 'Punto de rocío de Magnus, base de las nubes, agua líquida de la nube y agua de los atrapanieblas en la Serranía de Macuira, con fórmulas de Excel.',
+    columnas: [64, 16, 14],
+    filas: [
+      [{ v: 'La niebla en la Serranía de Macuira (ahora)', estilo: 'titulo' }],
+      [{ v: 'Datos de entrada en azul; los resultados se recalculan con fórmulas.', estilo: 'nota' }],
+      [],
+      ['Temperatura del aire en la costa T', e(aire.T, 2), '°C'],
+      ['Humedad relativa HR', e(aire.HR, 2), '%'],
+      ['Coeficiente a de Magnus', e(M.MAGNUS.a, 3), ''],
+      ['Coeficiente b de Magnus', e(M.MAGNUS.b, 2), '°C'],
+      ['Altura de los atrapanieblas', e(p.zAtrapa, 0), 'm'],
+      ['Agua líquida por metro sobre la base de las nubes', e(S.SITIO.gradLWC, 5), 'g/m³ por m'],
+      ['Agua líquida máxima de la niebla', e(S.SITIO.LWCmax, 3), 'g/m³'],
+      ['Viento de los alisios U', e(r.q.U, 2), 'm/s'],
+      ['Eficiencia de la malla η', e(p.etaMalla, 2), ''],
+      ['Malla instalada (atrapanieblas × área)', e(mac.malla, 0), 'm²'],
+      [],
+      ['γ = ln(HR/100) + a·T/(b + T)', { f: 'LN(B5/100)+B6*B4/(B7+B4)', v: Math.log(aire.HR / 100) + (M.MAGNUS.a * aire.T) / (M.MAGNUS.b + aire.T), dec: 5 }, ''],
+      ['Punto de rocío T_d = b·γ/(a − γ)', { f: 'B7*B15/(B6-B15)', v: aire.Td, dec: 3 }, '°C'],
+      ['Base de las nubes z_b = 125·(T − T_d)', { f: '125*(B4-B16)', v: aire.zb, dec: 1 }, 'm'],
+      ['Agua líquida en los atrapanieblas LWC = mín(máx, máx(0, gradiente·(z − z_b)))', { f: 'MIN(B10,MAX(0,B9*(B8-B17)))', v: mac.nb.lwcAtrapa, dec: 4 }, 'g/m³'],
+      ['Agua que atrapa la malla F = η·LWC·U', { f: 'B12*B18*B11', v: mac.nb.Fmalla, dec: 5 }, 'g/(m²·s)'],
+      ['Litros por m² de malla al día', { f: 'B19*86400/1000', v: mac.litrosM2Dia, dec: 2 }, 'L/(m²·día)'],
+      ['Litros al día de todos los atrapanieblas', { f: 'B20*B13', v: mac.litrosM2Dia * mac.malla, dec: 0 }, 'L/día'],
+    ],
+  };
+  const nieblaAno = {
+    nombre: 'Niebla mes a mes',
+    titulo: 'La niebla y la lluvia en la Serranía de Macuira',
+    nota: 'Hora por hora en cada día del año de régimen; bosque de niebla desde 550 m y cerro Palúa a 867 m.',
+    encabezados: ['Mes', 'Viento (m/s)', 'Mar en La Guajira (°C)', 'Base media de las nubes (m)', 'Horas con la cima en la nube', 'Horas con todo el bosque en la nube', 'Niebla que atrapa el bosque (mm)', 'Lluvia (mm)', 'Atrapanieblas (L/m²·día)'],
+    filas: a.meses.map((m) => [m.mes, { v: m.U, dec: 2 }, { v: m.Tg, dec: 2 }, { v: m.zb, dec: 0 }, { v: m.hCima, dec: 0 }, { v: m.hBosque, dec: 0 }, { v: m.niebla, dec: 1 }, { v: m.lluvia, dec: 1 }, { v: m.litros, dec: 2 }]),
+    columnas: [10, 14, 22, 24, 24, 28, 28, 14, 24],
+  };
+  return [viento, niebla, carbono, ano, nieblaAno];
 }
