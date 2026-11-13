@@ -41,14 +41,15 @@ export const FUENTES = {
 /**
  * Especies para cultivar en jaulas. La trucha arcoíris es la referencia (exótica, de Norteamérica:
  * llegó al lago de Tota en 1939 y se cría en jaulas desde 2005; conversión de 1.4 y 7.3 kg de
- * fósforo por tonelada, Torres-Barrera y Grandas-Rincón, 2017). El capitán de la sabana y la
+ * fósforo por tonelada, Torres Barrera y Grandas Rincón, 2017). El capitán de la sabana y la
  * guapucha son nativos del altiplano Cundiboyacense (cuenca del Magdalena); en Tota, que desagua al
  * Orinoco, llegaron en el siglo XX. Capitán: conversión de 2.0 a 2.9 y crecimiento de 0.7 a 0.9 %
- * al día de los juveniles en agua fría (AUNAP y UDCA, 2019), larvas criadas a 13–16 °C
- * (Moncaleano-Gómez y Prieto-Mojica, 2020), adultos de 200 a 500 g, oxígeno mínimo de 6 mg/L y
- * vulnerable en el Libro rojo (Vargas Castillo). Guapucha: pez pequeño (hasta 8 cm) que come
- * insectos y microcrustáceos (Roa-Fuentes et al., 2013); no hay datos publicados de su cultivo, así
- * que sus valores son supuestos de referencia.
+ * al día de alevinos en jaulas y estanques (Rosado Puccini et al., 2019, convenio AUNAP–U.D.C.A),
+ * huevos a unos 13 °C y larvas a 15.7 °C (Moncaleano-Gómez y Prieto-Mojica, 2020), adultos de 200
+ * a 500 g en aguas que no pasan de 18–20 °C y vulnerable en el Libro rojo (Prieto-Mojica et al.,
+ * 2017); su temperatura óptima y su oxígeno mínimo de 6 mg/L son supuestos. Guapucha: pez pequeño
+ * (hasta 8 cm) que come sobre todo larvas de insectos y microcrustáceos (Roa-Fuentes et al., 2013);
+ * no hay datos publicados de su cultivo, así que sus valores son supuestos de referencia.
  */
 export const ESPECIES = {
   trucha: {

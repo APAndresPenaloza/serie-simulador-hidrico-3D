@@ -17,8 +17,8 @@ const fmtMes = (v) => MESES[Math.round(v) - 1] ?? '';
 const NIVEL_SAL = (S) => (S <= 40 ? 'ok' : (S <= 50 ? 'aviso' : 'alerta'));
 
 const TABS = [
-  { id: 'rios', nombre: 'Ríos y caños', graficas: 2, tablas: true, intro: 'La ciénaga recibe agua dulce de dos lados. Por el oriente bajan los ríos de la Sierra Nevada (Fundación, Aracataca, Sevilla y otros), con el régimen del Caribe: poca agua de diciembre a abril y mucha en octubre y noviembre. Por el occidente entra el agua del río Magdalena por caños que lo conectan con la ciénaga; el caudal depende del desnivel entre el río y la ciénaga, que sube con la creciente del Magdalena (la principal en noviembre y otra menor en mayo y junio). Si los caños se sedimentan o se cierran con diques, la ciénaga pierde esa agua dulce.' },
-  { id: 'cienaga', nombre: 'Ciénaga', graficas: 2, tablas: true, intro: 'La ciénaga es una laguna muy somera, de metro y medio de profundidad, con cerca de 500 km² de espejo: cuando sube el nivel, el agua se extiende sobre los bordes de manglar y el área crece en línea recta con la profundidad. Su nivel queda muy cerca del nivel del mar, porque la boca deja salir lo que sobra. En el agua viven pueblos de palafitos (casas sobre pilotes), cuyos pisos deben quedar por encima de las crecientes.' },
+  { id: 'rios', nombre: 'Ríos y caños', graficas: 2, tablas: true, intro: 'La ciénaga recibe agua dulce de dos lados. Por el oriente bajan los ríos de la Sierra Nevada (Fundación, Aracataca, Sevilla y otros), con el régimen del Caribe: poca agua de diciembre a abril y mucha en octubre y noviembre. Por el occidente, los caños comunican la ciénaga con el río Magdalena y el agua va en los dos sentidos: cuando el río está más alto que la ciénaga (con la creciente principal de noviembre y la menor de mayo y junio) el Magdalena entra a la ciénaga; cuando el río baja en el estiaje, la marea lo hace oscilar y los alisios del noreste levantan el agua en la orilla de los caños, la ciénaga le devuelve agua salobre al río. Si los caños se sedimentan o se cierran con diques, se pierde ese intercambio.' },
+  { id: 'cienaga', nombre: 'Ciénaga', graficas: 2, tablas: true, intro: 'La ciénaga es una laguna muy somera, de metro y medio de profundidad, con cerca de 500 km² de espejo: cuando sube el nivel, el agua se extiende sobre los bordes de manglar y el área crece en línea recta con la profundidad. Su nivel queda muy cerca del nivel del mar, porque la boca deja salir lo que sobra, pero el viento la inclina unos centímetros: en el estiaje los alisios bajan el agua frente a la boca y la suben en la orilla de los caños. En el agua viven pueblos de palafitos (casas sobre pilotes), cuyos pisos deben quedar por encima de las crecientes.' },
   { id: 'mar', nombre: 'Mar y boca', graficas: 2, intro: 'La ciénaga se comunica con el mar Caribe por la Boca de la Barra y por las alcantarillas que pasan bajo la carretera de la barra de arena. La marea del Caribe es pequeña (unas decenas de centímetros) y mixta, principalmente diurna: la suma de cuatro ondas de períodos distintos. Cuando el mar está más alto que la ciénaga entra agua salada; cuando está más bajo, sale agua de la ciénaga. La boca se puede sedimentar y el mar puede subir.' },
   { id: 'salinidad', nombre: 'Salinidad', graficas: 2, tablas: true, intro: 'La sal solo entra con el agua de mar, pero la evaporación se lleva el agua y deja la sal. Si llega poca agua dulce en la temporada seca, la ciénaga se vuelve más salada que el mar (hipersalina). Como una caja bien mezclada, su salinidad se acerca a un equilibrio que depende del agua de mar que entra, del agua dulce y de la evaporación; esa función racional tiene una asíntota donde la evaporación iguala lo que entra.' },
   { id: 'manglar', nombre: 'Manglar y pesca', graficas: 2, tablas: true, intro: 'El manglar rodea la ciénaga y sostiene su pesca. Cada especie de mangle aguanta una salinidad distinta en el suelo: el mangle rojo es el más sensible y el negro el más resistente. Cuando la carretera de la barra y los diques del Magdalena cortaron el agua dulce y el intercambio con el mar, la sal del suelo subió y murió una gran parte del manglar; la apertura de los caños desde los años noventa buscó revertirlo.' },
@@ -29,7 +29,7 @@ const TABS = [
 const CONTROLES = [
   { tab: 'rios', grupo: 'Escenario' },
   { tab: 'rios', id: 'escenario', clave: 'escenario', etiqueta: 'Escenario', tipo: 'opciones', opciones: opciones(S.ESCENARIOS), escribir: () => {}, alCambiar: (v, p, sim, ctx) => ctx.aplicarEscenario(v),
-    doc: 'Pone a la vez los valores de un caso de estudio: El Niño, La Niña, la ciénaga de los años noventa, la crisis del manglar, la restauración, la boca sedimentada, la eutrofización o el ascenso del mar.' },
+    doc: 'Pone a la vez los valores de un caso de estudio: el estiaje de abril (la ciénaga le devuelve agua al río), El Niño, La Niña, la ciénaga de los años noventa, la crisis del manglar, la restauración, la boca sedimentada, la eutrofización o el ascenso del mar.' },
   { tab: 'rios', id: 'clima', clave: 'clima', etiqueta: 'Clima del año', tipo: 'opciones', opciones: opciones(S.CLIMAS),
     extra: (v) => { const c = S.CLIMAS[v]; return `Ríos × ${fmt(c.fRios, 1)}, Magdalena ${conSigno(c.dH, 1)} m, lluvia × ${fmt(c.fLluvia, 1)}, evaporación × ${fmt(c.fEvap, 2)}.`; },
     doc: 'Cambia el caudal de los ríos de la Sierra, el nivel del Magdalena, la lluvia y la evaporación.' },
@@ -42,6 +42,10 @@ const CONTROLES = [
   { tab: 'rios', id: 'nCanos', clave: 'nCanos', etiqueta: 'Número de caños', unidad: '', min: 0, max: 6, paso: 1, dec: 0, doc: 'Caños que comunican el Magdalena con la ciénaga.' },
   { tab: 'rios', id: 'estadoCanos', clave: 'estadoCanos', etiqueta: 'Estado de los caños', tipo: 'opciones', opciones: opciones(S.ESTADOS_CANO), doc: 'Fija la sección de cada caño.' },
   { tab: 'rios', id: 'Ccano', clave: 'Ccano', etiqueta: 'Coeficiente de descarga del caño', unidad: '', min: 0.05, max: 0.8, paso: 0.01, dec: 2, doc: 'Resume la fricción de un caño largo y sinuoso.' },
+  { tab: 'rios', grupo: 'Marea y viento en los caños' },
+  { tab: 'rios', id: 'kMarea', clave: 'kMarea', etiqueta: 'Parte de la marea que llega a los caños por el río', unidad: '', min: 0, max: 1, paso: 0.05, dec: 2, doc: 'κ: la marea sube por la desembocadura del Magdalena y llega amortiguada a los caños: H(t) = H(d) + κ·marea(t).' },
+  { tab: 'rios', id: 'Uviento', clave: 'Uviento', etiqueta: 'Viento de los alisios sobre la ciénaga (febrero)', unidad: 'm/s', min: 0, max: 15, paso: 0.5, dec: 1, extra: (v, p, r) => `Hoy ${fmt(r.q.U, 1)} m/s: el agua sube ${fmt(100 * r.q.dEta / 2, 1)} cm en la orilla de los caños y baja lo mismo frente a la boca.`, doc: 'El mes más ventoso; cada mes tiene su fracción (los alisios soplan de diciembre a abril y se calman en octubre).' },
+  { tab: 'rios', id: 'fetch', clave: 'fetch', etiqueta: 'Largo de la ciénaga en la dirección del viento', unidad: 'km', min: 1, max: 60, paso: 1, dec: 0, doc: 'L del set-up Δη = C_D·(ρ_a/ρ)·U²·L/(g·h).' },
 
   { tab: 'cienaga', grupo: 'Forma de la ciénaga' },
   { tab: 'cienaga', id: 'areaFondo', clave: 'areaFondo', etiqueta: 'Área del fondo', unidad: 'km²', min: 50, max: 1000, paso: 5, dec: 0, doc: 'A_c: el área con el agua muy baja.' },
@@ -77,8 +81,8 @@ function estados(p, r) {
   const sal = r.S;
   return [
     { id: 'salinidad', nombre: 'Salinidad', nivel: NIVEL_SAL(r.a.Smax), texto: `Salinidad: ${fmt(sal, 1)} PSU ahora, ${fmt(r.a.Smax, 1)} PSU en el peor mes` },
-    { id: 'agua', nombre: 'Agua dulce', nivel: r.a.Qd >= r.a.Qe ? 'ok' : 'alerta', texto: `Agua dulce: ríos ${fmt(r.q.Qr, 1)} y caños ${fmt(r.q.Qc, 1)} m³/s` },
-    { id: 'manglar', nombre: 'Manglar', nivel: r.saludPeor >= 0.8 ? (r.especies.rojo.estresPeor > 0 ? 'aviso' : 'ok') : 'alerta', texto: `Manglar: ${fmt(100 * r.saludPeor, 0)} % sano en el peor mes` },
+    { id: 'agua', nombre: 'Agua dulce', nivel: r.a.Qd >= r.a.Qe ? 'ok' : 'alerta', texto: r.q.Qc >= 0 ? `Agua dulce: ríos ${fmt(r.q.Qr, 1)} y caños ${fmt(r.q.Qc, 1)} m³/s` : `Ríos ${fmt(r.q.Qr, 1)} m³/s · la ciénaga devuelve ${fmt(-r.q.Qc, 1)} m³/s al río` },
+    { id: 'manglar', nombre: 'Manglar', nivel: r.saludPeor >= 0.8 ? (r.especies.rojo.estresPeor > 0.25 ? 'aviso' : 'ok') : 'alerta', texto: `Manglar: ${fmt(100 * r.saludPeor, 0)} % sano en el peor mes` },
     { id: 'oxigeno', nombre: 'Oxígeno', nivel: r.ca.ODmin >= 4 ? 'ok' : (r.ca.ODmin >= 2 ? 'aviso' : 'alerta'), texto: r.ca.ODmin >= 2 ? `Oxígeno de la madrugada: ${fmt(r.ca.ODmin, 2)} mg/L` : `Mortandad de peces: ${fmt(r.ca.ODmin, 2)} mg/L en la madrugada` },
     { id: 'nivel', nombre: 'Nivel', nivel: r.margenPalafitos >= 0.3 ? 'ok' : 'alerta', texto: `Nivel: ${conSigno(r.z, 2)} m.s.n.m. (marea ${conSigno(r.q.eta, 2)} m)` },
   ];
@@ -87,40 +91,61 @@ function estados(p, r) {
 const PINTORES = {
   rios({ p, r, c }) {
     const cl = S.clima(p);
-    const H = (d) => M.nivelRio(d, p.Hrio + cl.dH, p.A1, p.d1, p.A2, p.d2);
+    const piso = p.nivelMar + S.SITIO.bordeRio;
+    const HF = (d) => M.nivelRio(d, p.Hrio + cl.dH, p.A1, p.d1, p.A2, p.d2);
+    const Hd = (d) => Math.max(HF(d) + p.kMarea * p.nivelMar, piso);
     const a = r.a.meses;
+    const q = r.q;
+    const dh = q.H - q.zC;
+    const sentido = q.Qc >= 0 ? 'el Magdalena entra a la ciénaga' : 'la ciénaga le devuelve agua al río';
+    const ret = r.retorno;
+    const xMes = (k) => 15 + 30.4 * k;
     return {
       metricas: [
         ['<b>Ríos de la Sierra</b>', '', ''],
-        ['Caudal de los ríos hoy', r.q.Qr, 'm³/s', '', 1, 'Caudal medio por el factor del mes y del clima.'],
+        ['Caudal de los ríos hoy', q.Qr, 'm³/s', '', 1, 'Caudal medio por el factor del mes y del clima.'],
         ['Caudal medio del año', r.a.Qr, 'm³/s', '', 1],
         ['<b>Magdalena y caños</b>', '', ''],
-        ['Nivel del Magdalena frente a los caños', r.q.H, 'm.s.n.m.', '', 2, 'Serie de Fourier de dos términos.'],
-        ['Nivel de la ciénaga', r.z, 'm.s.n.m.', '', 3],
-        ['Desnivel río − ciénaga', r.q.H - r.z, 'm', r.q.H > r.z ? 'ok' : 'aviso', 3],
+        ['Nivel del Magdalena hoy (régimen del día)', q.Hd, 'm.s.n.m.', '', 2, 'Serie de Fourier; no baja del nivel del mar + 3 cm.'],
+        ['Nivel del Magdalena ahora (con la marea)', q.H, 'm.s.n.m.', '', 3, 'H = H(d) + κ·marea(t).'],
+        ['Nivel de la ciénaga (media)', r.z, 'm.s.n.m.', '', 3],
+        ['Viento de los alisios ahora', q.U, 'm/s', '', 1],
+        ['Agua de la ciénaga en la orilla de los caños', q.zC, 'm.s.n.m.', '', 3, 'z + Δη/2: el viento la sube.'],
+        ['Desnivel río − orilla de los caños', dh, 'm', dh >= 0 ? 'ok' : 'aviso', 3, 'Positivo: entra el río; negativo: sale la ciénaga.'],
         ['Sección de cada caño', r.areaCano, 'm²', '', 0],
-        ['Velocidad en los caños', M.velocidadAbertura(p.Ccano, r.q.H - r.z), 'm/s', '', 2, 'v = C·√(2g·Δh).'],
-        ['Caudal por los caños hoy', r.q.Qc, 'm³/s', r.q.Qc > 0 ? 'ok' : 'aviso', 1, 'Q = n·C·A·√(2g·Δh).'],
-        ['Caudal medio de los caños en el año', r.a.Qc, 'm³/s', r.a.Qc > 1 ? 'ok' : 'alerta', 1],
+        ['Velocidad en los caños', M.velocidadAbertura(p.Ccano, dh), 'm/s', '', 2, 'v = C·√(2g·|Δh|).'],
+        ['Caudal por los caños ahora', q.Qc, 'm³/s', q.Qc >= 0 ? 'ok' : 'aviso', 1, q.Qc >= 0 ? 'Positivo: el Magdalena entra a la ciénaga.' : 'Negativo: la ciénaga le devuelve agua salobre al río.'],
+        ['<b>El intercambio en el año</b>', '', ''],
+        ['Entra del Magdalena (media del año)', r.a.QcIn, 'm³/s', '', 1, 'Q⁺ = máx(0, Q).'],
+        ['Vuelve al río (media del año)', r.a.QcOut, 'm³/s', '', 1, 'Q⁻ = máx(0, −Q).'],
+        ['Intercambio neto hacia la ciénaga', r.a.Qc, 'm³/s', r.a.Qc > 1 ? 'ok' : 'alerta', 1, 'Q⁺ − Q⁻.'],
+        ['Días del año con la ciénaga entregando agua al río', ret.dias, 'días', '', 0, ret.meses.length ? `En promedio sale hacia el río en ${ret.meses.join(', ')}.` : 'Ningún mes sale en promedio hacia el río; solo a ratos con la marea baja.'],
+        ['Agua que la ciénaga le devuelve al río en el año', ret.volumen, 'hm³', '', 0],
         ['Agua dulce del año (ríos + caños + lluvia)', r.a.Qd, 'm³/s', r.a.Qd >= r.a.Qe ? 'ok' : 'alerta', 1],
       ],
-      tablas: tablaHTML('El agua dulce de cada mes (m³/s)', ['Mes', 'Ríos', 'Caños', 'Lluvia', 'Evaporación'], a.map((m) => [m.mes, fmt(m.Qr, 1), { v: fmt(m.Qc, 1), clase: m.Qc < 1 ? 'mal' : '' }, fmt(m.Qll, 1), fmt(m.Qe, 1)]), { numericas: [1, 2, 3, 4], nota: 'Medias de cada mes del año de régimen.' }),
+      tablas: tablaHTML('El intercambio con el río y el agua dulce de cada mes (m³/s)', ['Mes', 'Ríos', 'Entra del río', 'Vuelve al río', 'Neto', 'Días saliendo', 'Lluvia', 'Evaporación'], a.map((m) => [m.mes, fmt(m.Qr, 1), fmt(m.QcIn, 1), { v: fmt(m.QcOut, 1), clase: m.QcOut > 1 ? 'mal' : '' }, { v: fmt(m.Qc, 1), clase: m.Qc < 0 ? 'mal' : '' }, fmt(m.diasRet, 0), fmt(m.Qll, 1), fmt(m.Qe, 1)]), { numericas: [1, 2, 3, 4, 5, 6, 7], nota: 'Medias de cada mes del año de régimen. «Vuelve al río»: agua salobre que la ciénaga le entrega al Magdalena por los caños; «Días saliendo»: tiempo del mes con el agua corriendo hacia el río.' }),
       ecuacion: [
-        ecu.tipo('Serie de Fourier (periódica): el nivel del Magdalena'),
-        ecu.formula(`${i('H')}(${i('d')}) = ${i('H̄')} + ${sub('A', '1')}·cos(2π(${i('d')} − ${sub('d', '1')})/365) + ${sub('A', '2')}·cos(4π(${i('d')} − ${sub('d', '2')})/365)`),
-        ecu.sust(`${i('H')}(${r.q.d}) = ${fmt(p.Hrio + cl.dH, 2)} + ${fmt(p.A1, 2)}·cos(2π(${r.q.d} − ${p.d1})/365) + ${fmt(p.A2, 2)}·cos(4π(${r.q.d} − ${p.d2})/365) = ${fmt(r.q.H, 2)} m`),
-        ecu.tipo('Raíz cuadrada: caudal por los caños (orificio)'),
-        ecu.formula(`${i('Q')} = ${i('n')}·${i('C')}·${i('A')}·√(2${i('g')}·Δ${i('h')}) ≈ ${i('n')}·${i('C')}·${i('A')}·√(2${i('g')})·Δ${i('h')}/√(|Δ${i('h')}| + δ)`),
-        ecu.sust(`${i('Q')} = ${p.nCanos} × ${fmt(p.Ccano, 2)} × ${fmt(r.areaCano, 0)} × √(2 × 9.81) × ${fmt(r.q.H - r.z, 3)}/√(${fmt(Math.abs(r.q.H - r.z), 3)} + ${fmt(S.SITIO.delta, 2)}) = ${fmt(r.q.Qc, 1)} m³/s`),
-        ecu.nota(`La segunda forma es la misma raíz: Δh/√Δh = √Δh. El δ = ${fmt(S.SITIO.delta, 2)} m solo cuenta cuando el desnivel es de pocos centímetros; así el caudal cambia de sentido sin saltos y el cálculo con el reloj no oscila.`),
+        ecu.tipo('Serie de Fourier (periódica) y por tramos: el nivel del Magdalena'),
+        ecu.formula(`${i('H')}(${i('d')}) = máx(${i('H̄')} + ${sub('A', '1')}·cos(2π(${i('d')} − ${sub('d', '1')})/365) + ${sub('A', '2')}·cos(4π(${i('d')} − ${sub('d', '2')})/365), η̄ + 0.03)`),
+        ecu.sust(`${i('H')}(${q.d}) = máx(${fmt(p.Hrio + cl.dH, 2)} + ${fmt(p.A1, 2)}·cos(2π(${q.d} − ${p.d1})/365) + ${fmt(p.A2, 2)}·cos(4π(${q.d} − ${p.d2})/365)${p.nivelMar ? ` + ${fmt(p.kMarea, 2)} × ${fmt(p.nivelMar, 2)}` : ''}, ${fmt(piso, 2)}) = ${fmt(q.Hd, 3)} m`),
+        ecu.nota('El río tiene que correr hacia el mar: frente a los caños, en su delta, no baja del nivel medio del mar. Por eso la función tiene dos tramos (el máximo de dos funciones).'),
+        ecu.tipo('Suma de funciones: la marea sube por el río'),
+        ecu.formula(`${i('H')}(${i('t')}) = ${i('H')}(${i('d')}) + κ·marea(${i('t')}) = ${fmt(q.Hd, 3)} + ${fmt(p.kMarea, 2)} × ${conSigno(q.mareaHoy, 3)} = ${fmt(q.H, 3)} m`),
+        ecu.tipo('Cuadrática y racional: el viento inclina la ciénaga'),
+        ecu.formula(`Δη = ${sub('C', 'D')}·(${sub('ρ', 'a')}/ρ)·${i('U')}²·${i('L')}/(${i('g')}·${i('h')})`),
+        ecu.sust(`Δη = 0.0013 × (1.2/1000) × ${fmt(q.U, 1)}² × ${miles(p.fetch * 1000)}/(9.81 × ${fmt(r.h, 2)}) = ${fmt(q.dEta, 4)} m → orilla de los caños ${fmt(r.z, 3)} + ${fmt(q.dEta / 2, 3)} = ${fmt(q.zC, 3)} m`),
+        ecu.tipo('Raíz cuadrada con signo: caudal por los caños en los dos sentidos'),
+        ecu.formula(`${i('Q')} = ${i('n')}·${i('C')}·${i('A')}·√(2${i('g')})·Δ${i('h')}/√(|Δ${i('h')}| + δ),  Δ${i('h')} = ${i('H')} − (${i('z')} + Δη/2)`),
+        ecu.sust(`${i('Q')} = ${p.nCanos} × ${fmt(p.Ccano, 2)} × ${fmt(r.areaCano, 0)} × √(2 × 9.81) × ${fmt(dh, 3)}/√(${fmt(Math.abs(dh), 3)} + ${fmt(S.SITIO.delta, 2)}) = ${fmt(q.Qc, 1)} m³/s (${sentido})`),
+        ecu.nota(`Δh/√Δh = √Δh: es la misma ley del orificio, con el signo del desnivel. El δ = ${fmt(S.SITIO.delta, 2)} m solo cuenta con desniveles de pocos centímetros; así el caudal cambia de sentido sin saltos. En el año: Q⁺ = ${fmt(r.a.QcIn, 1)} m³/s entran y Q⁻ = ${fmt(r.a.QcOut, 1)} m³/s vuelven al río.`),
       ].join(''),
       graficas: [
-        { xTitulo: 'Día del año', yTitulo: 'Nivel (m.s.n.m.)', formatoX: (v) => fmt(v, 0), formatoY: (v) => fmt(v, 1),
-          series: [serieLinea('Magdalena H(d)', muestrear(H, 1, 365, 180), c.ocre), serieLinea('Solo la onda anual', muestrear((d) => p.Hrio + cl.dH + p.A1 * Math.cos((2 * Math.PI * (d - p.d1)) / 365), 1, 365, 120), c.tinta2, { punteada: true, ancho: 1 }), serieLinea('Ciénaga (media del mes)', a.map((m, k) => ({ x: 15 + 30.4 * k, y: m.z })), c.agua), seriePuntos('Hoy', [{ x: r.q.d, y: r.q.H }], c.alerta)],
-          limites: { x: { min: 1, max: 365 }, y: { min: Math.min(-0.5, p.Hrio - 1.5), max: Math.max(2.5, p.Hrio + p.A1 + p.A2 + 0.3) } }, pie: 'El Magdalena sube con dos crecientes al año: la diferencia con la ciénaga empuja el agua por los caños.' },
+        { xTitulo: 'Día del año', yTitulo: 'Nivel (m.s.n.m.)', formatoX: (v) => fmt(v, 0), formatoY: (v) => fmt(v, 2),
+          series: [serieLinea('Magdalena frente a los caños H(d)', muestrear(Hd, 1, 365, 365), c.ocre), serieLinea('Sin el piso del mar (Fourier sola)', muestrear((d) => HF(d) + p.kMarea * p.nivelMar, 1, 365, 180), c.tinta2, { punteada: true, ancho: 1 }), serieLinea('Ciénaga en la orilla de los caños (media del mes)', a.map((m, k) => ({ x: xMes(k), y: m.z + m.dEta / 2 })), c.agua, { ancho: 2.5 }), seriePuntos('Hoy', [{ x: q.d, y: q.Hd }], c.alerta)],
+          limites: { x: { min: 1, max: 365 }, y: { min: Math.min(-0.3, piso - 0.15, ...a.map((m) => m.z)), max: Math.max(1.6, p.Hrio + cl.dH + p.A1 + p.A2 + 0.2) } }, pie: 'Donde la curva del Magdalena pasa por debajo de la ciénaga, el agua de la ciénaga sale por los caños hacia el río.' },
         { xTitulo: 'Mes', yTitulo: 'Caudal (m³/s)', formatoX: fmtMes, formatoY: (v) => fmt(v, 0), marcasX: MARCAS_MES,
-          series: [serieLinea('Ríos de la Sierra', a.map((m, k) => ({ x: k + 1, y: m.Qr })), c.ok), serieLinea('Caños del Magdalena', a.map((m, k) => ({ x: k + 1, y: m.Qc })), c.ocre), serieLinea('Evaporación', a.map((m, k) => ({ x: k + 1, y: m.Qe })), c.alerta, { punteada: true })],
-          limites: { x: { min: 1, max: 12 }, y: { min: Math.min(0, ...a.map((m) => m.Qc)) } }, pie: 'De enero a abril llega poca agua dulce y la evaporación pesa más: la ciénaga se sala.' },
+          series: [serieLinea('Entra del Magdalena (Q⁺)', a.map((m, k) => ({ x: k + 1, y: m.QcIn })), c.ocre), serieLinea('Vuelve al río (−Q⁻)', a.map((m, k) => ({ x: k + 1, y: -m.QcOut })), c.alerta, { relleno: true }), serieLinea('Neto por los caños', a.map((m, k) => ({ x: k + 1, y: m.Qc })), c.tinta, { punteada: true, ancho: 1.5 }), serieLinea('Ríos de la Sierra', a.map((m, k) => ({ x: k + 1, y: m.Qr })), c.ok), serieLinea('Evaporación', a.map((m, k) => ({ x: k + 1, y: m.Qe })), c.tinta2, { punteada: true, ancho: 1 }), serieGuia('Cero', { x: 1, y: 0 }, { x: 12, y: 0 }, c.tinta2, { punteada: false, ancho: 1 })],
+          limites: { x: { min: 1, max: 12 }, y: { min: Math.min(-10, ...a.map((m) => -m.QcOut - 5)) } }, pie: 'De la creciente a la sequía: el Magdalena llena la ciénaga y en el estiaje la ciénaga le devuelve agua (área roja bajo el cero).' },
       ],
     };
   },
@@ -134,8 +159,9 @@ const PINTORES = {
         ['Cota del agua', r.z, 'm.s.n.m.', '', 3],
         ['Área del espejo', r.A / 1e6, 'km²', '', 1, 'A = A_c + s·h.'],
         ['Volumen de agua', r.V / 1e6, 'hm³', '', 0, 'V = A_c·h + s·h²/2.'],
-        ['Balance del instante', r.q.Qneto, 'm³/s', '', 1, 'Ríos + caños + lluvia − evaporación ± boca.'],
-        ['Tiempo de residencia', r.tauDias, 'días', r.tauDias <= 120 ? 'ok' : 'aviso', 0, 'τ = V/(agua que sale por la boca).'],
+        ['Balance del instante', r.q.Qneto, 'm³/s', '', 1, 'Ríos ± caños + lluvia − evaporación ± boca.'],
+        ['Inclinación del agua por el viento', 100 * r.q.dEta, 'cm', '', 1, 'Δη: sube la mitad en la orilla de los caños y baja la mitad frente a la boca.'],
+        ['Tiempo de residencia', r.tauDias, 'días', r.tauDias <= 120 ? 'ok' : 'aviso', 0, 'τ = V/(agua que sale por la boca y vuelve al río por los caños).'],
         ['Nivel máximo del año', r.a.zMax, 'm.s.n.m.', r.margenPalafitos >= 0.3 ? 'ok' : 'alerta', 3],
         ['Margen bajo el piso de los palafitos', r.margenPalafitos, 'm', r.margenPalafitos >= 0.3 ? 'ok' : 'alerta', 2],
       ],
@@ -148,8 +174,8 @@ const PINTORES = {
         ecu.tipo('Despeje de la cuadrática: profundidad a partir del volumen'),
         ecu.formula(`${i('h')} = (−${sub('A', 'c')} + √(${sub('A', 'c')}² + 2${i('s')}${i('V')}))/${i('s')}`),
         ecu.tipo('Racional: tiempo de residencia'),
-        ecu.formula(`τ = ${i('V')}/${i('Q')}`),
-        ecu.sust(`τ = ${fmt(r.V / 1e6, 0)} hm³/${fmt(r.a.Qsale, 1)} m³/s = ${fmt(r.tauDias, 0)} días`),
+        ecu.formula(`τ = ${i('V')}/(${sub('Q', 'boca')} + ${sub('Q', 'caños')}⁻)`),
+        ecu.sust(`τ = ${fmt(r.V / 1e6, 0)} hm³/(${fmt(r.a.Qsale, 1)} + ${fmt(r.a.QcOut, 1)}) m³/s = ${fmt(r.tauDias, 0)} días`),
       ].join(''),
       graficas: [
         { xTitulo: 'Profundidad media h (m)', yTitulo: 'Volumen (hm³)', formatoX: (v) => fmt(v, 1), formatoY: (v) => fmt(v, 0),
@@ -171,7 +197,7 @@ const PINTORES = {
     const pasos = [];
     for (let k = 0; k <= 144; k++) {
       const q = S.caudales(p, copia);
-      pasos.push({ x: k / 2, mar: q.eta, cie: q.z, Qb: q.Qb });
+      pasos.push({ x: k / 2, mar: q.eta, cie: q.z, Qb: q.Qb, Qc: q.Qc, rio: q.H });
       S.avanzar(p, copia, 1800);
       copia.t += 1800;
     }
@@ -182,6 +208,7 @@ const PINTORES = {
         ['Rango máximo de la marea', r.rangoMarea, 'm', '', 2, '2·(K1 + O1 + M2 + S2).'],
         ['Nivel del mar ahora', r.q.eta, 'm', '', 3],
         ['Nivel de la ciénaga ahora', r.z, 'm', '', 3],
+        ['Nivel de la ciénaga frente a la boca', r.q.zB, 'm', '', 3, 'z − Δη/2: el viento la baja y entra más mar.'],
         ['Sección de la boca y las alcantarillas', r.areaBoca, 'm²', r.areaBoca >= 300 ? 'ok' : 'alerta', 0],
         ['Caudal por la boca ahora', r.q.Qb, 'm³/s', '', 1, 'Positivo: entra agua de mar; negativo: sale agua de la ciénaga.'],
         ['Agua de mar que entra (media del año)', r.a.Qm, 'm³/s', r.a.Qm >= 50 ? 'ok' : 'aviso', 1],
@@ -194,16 +221,16 @@ const PINTORES = {
         ecu.tipo('Racional: número de forma'),
         ecu.formula(`${i('F')} = (K1 + O1)/(M2 + S2) = (${fmt(p.K1, 2)} + ${fmt(p.O1, 2)})/(${fmt(p.M2, 2)} + ${fmt(p.S2, 2)}) = ${fmt(r.F, 2)}`),
         ecu.tipo('Raíz cuadrada: caudal por la boca'),
-        ecu.formula(`${i('Q')} = ${i('C')}·${i('A')}·√(2${i('g')}·(η − ${i('z')})) ≈ ${i('C')}·${i('A')}·√(2${i('g')})·(η − ${i('z')})/√(|η − ${i('z')}| + δ)`),
-        ecu.sust(`${i('Q')} = ${fmt(p.Cboca, 2)} × ${miles(r.areaBoca)} × √(2 × 9.81) × ${fmt(r.q.eta - r.z, 3)}/√(${fmt(Math.abs(r.q.eta - r.z), 3)} + ${fmt(S.SITIO.delta, 2)}) = ${fmt(r.q.Qb, 1)} m³/s (${r.q.Qb >= 0 ? 'entra agua de mar' : 'sale agua de la ciénaga'})`),
+        ecu.formula(`${i('Q')} = ${i('C')}·${i('A')}·√(2${i('g')}·(η − ${sub('z', 'B')})) ≈ ${i('C')}·${i('A')}·√(2${i('g')})·(η − ${sub('z', 'B')})/√(|η − ${sub('z', 'B')}| + δ),  ${sub('z', 'B')} = ${i('z')} − Δη/2`),
+        ecu.sust(`${i('Q')} = ${fmt(p.Cboca, 2)} × ${miles(r.areaBoca)} × √(2 × 9.81) × ${fmt(r.q.eta - r.q.zB, 3)}/√(${fmt(Math.abs(r.q.eta - r.q.zB), 3)} + ${fmt(S.SITIO.delta, 2)}) = ${fmt(r.q.Qb, 1)} m³/s (${r.q.Qb >= 0 ? 'entra agua de mar' : 'sale agua de la ciénaga'})`),
       ].join(''),
       graficas: [
         { xTitulo: 'Días desde hoy', yTitulo: 'Nivel del mar (m)', formatoX: (v) => fmt(v, 0), formatoY: (v) => fmt(v, 2),
           series: [serieLinea('Marea η(t)', mar, c.agua), seriePuntos('Ahora', [{ x: 0, y: r.q.eta }], c.ocre)],
           limites: { x: { min: -15, max: 15 }, y: { min: p.nivelMar - r.rangoMarea * 0.6, max: p.nivelMar + r.rangoMarea * 0.6 } }, pie: 'Un mes de marea: las ondas K1 y O1 se adelantan y se atrasan y hacen semanas de marea grande y de marea pequeña.' },
         { xTitulo: 'Horas desde ahora', yTitulo: 'Nivel (cm) · caudal (decenas de m³/s)', formatoX: (v) => fmt(v, 0), formatoY: (v) => fmt(v, 0), marcasX: [0, 12, 24, 36, 48, 60, 72],
-          series: [serieLinea('Mar (cm)', pasos.map((x) => ({ x: x.x, y: 100 * x.mar })), c.agua), serieLinea('Ciénaga (cm)', pasos.map((x) => ({ x: x.x, y: 100 * x.cie })), c.ok), serieLinea('Caudal por la boca ÷ 10', pasos.map((x) => ({ x: x.x, y: x.Qb / 10 })), c.ocre, { punteada: true })],
-          limites: { x: { min: 0, max: 72 } }, pie: 'La ciénaga, muy grande frente a su boca, casi no sigue la marea: el desnivel entre el mar y la ciénaga hace entrar y salir el agua.' },
+          series: [serieLinea('Mar (cm)', pasos.map((x) => ({ x: x.x, y: 100 * x.mar })), c.agua), serieLinea('Ciénaga (cm)', pasos.map((x) => ({ x: x.x, y: 100 * x.cie })), c.ok), serieLinea('Caudal por la boca ÷ 10', pasos.map((x) => ({ x: x.x, y: x.Qb / 10 })), c.ocre, { punteada: true }), serieLinea('Caudal por los caños ÷ 10 (+ entra del río, − vuelve al río)', pasos.map((x) => ({ x: x.x, y: x.Qc / 10 })), c.alerta, { ancho: 1.5 })],
+          limites: { x: { min: 0, max: 72 } }, pie: 'La ciénaga, muy grande frente a su boca, casi no sigue la marea. En el estiaje la marea que sube por el río hace cambiar de sentido el agua de los caños dos veces al día.' },
       ],
     };
   },
@@ -211,7 +238,7 @@ const PINTORES = {
   salinidad({ p, r, c }) {
     const m = r.mesAhora;
     const Qm = m.Qbin, EA = m.Qe;
-    const Qd = m.Qr + Math.max(0, m.Qc) + m.Qll;
+    const Qd = m.Qr + m.QcIn + m.Qll;
     const asintota = EA - Qm;
     const xMax = Math.max(300, Qd * 1.5);
     const xMin = Math.min(0, asintota - 25);
@@ -294,8 +321,8 @@ const PINTORES = {
     const dia = muestrear((h) => Math.max(0, M.oxigenoHora(ca.ODm, ca.A, h)), 0, 24, 96);
     return {
       metricas: [
-        ['Fósforo del agua que entra', ca.Pin, 'µg/L', '', 1, 'Promedio ponderado de los ríos, los caños y el mar.'],
-        ['Tiempo de residencia medio del año', ca.tau * 365, 'días', '', 0, 'τ = V(1.5 m)/(agua que sale por la boca en el año), en años para Vollenweider.'],
+        ['Fósforo del agua que entra', ca.Pin, 'µg/L', '', 1, 'Promedio ponderado de los ríos, lo que entra por los caños y el mar.'],
+        ['Tiempo de residencia medio del año', ca.tau * 365, 'días', '', 0, 'τ = V(1.5 m)/(agua que sale por la boca y vuelve al río en el año), en años para Vollenweider.'],
         ['Fósforo de la ciénaga', ca.P, 'µg/L', '', 1, 'P = P_in/(1 + √τ).'],
         ['Clorofila a', ca.Chl, 'µg/L', ca.Chl <= 40 ? 'ok' : 'aviso', 1, 'Dillon y Rigler: Chl = 0.0731·P^1.449.'],
         ['Temperatura del agua', ca.Tagua, '°C', '', 1],
@@ -382,11 +409,12 @@ iniciarSimulador({
       { clave: 'z', nombre: 'Nivel', unidad: 'm.s.n.m.', dec: 3 },
       { clave: 'eta', nombre: 'Marea', unidad: 'm', dec: 3 },
       { clave: 'S', nombre: 'Salinidad', unidad: 'PSU', dec: 2 },
-      { clave: 'Qc', nombre: 'Caños', unidad: 'm³/s', dec: 1 },
+      { clave: 'H', nombre: 'Magdalena', unidad: 'm.s.n.m.', dec: 3 },
+      { clave: 'Qc', nombre: 'Caños (+ entra, − vuelve al río)', unidad: 'm³/s', dec: 1 },
       { clave: 'Qb', nombre: 'Boca', unidad: 'm³/s', dec: 1 },
       { clave: 'OD', nombre: 'Oxígeno', unidad: 'mg/L', dec: 2 },
     ],
-    tomar: (p, r) => ({ z: r.z, eta: r.q.eta, S: r.S, Qc: r.q.Qc, Qb: r.q.Qb, OD: r.ca.OD }),
+    tomar: (p, r) => ({ z: r.z, eta: r.q.eta, S: r.S, H: r.q.H, Qc: r.q.Qc, Qb: r.q.Qb, OD: r.ca.OD }),
   },
   hojasExcel,
   nodo: N,

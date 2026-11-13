@@ -4,7 +4,8 @@
  * Recibe uno de los ríos de la Sierra Nevada (el del simulador de ríos), el nivel y el
  * sedimento del río grande (el del delta: el Magdalena frente a los caños) y las condiciones
  * del mar (nivel, marea y salinidad, del simulador de océanos). Entrega al delta y al mar el
- * agua que sale por la boca, con su salinidad, su temperatura, su oxígeno y su fósforo.
+ * agua que sale por la boca, con su salinidad, su temperatura, su oxígeno y su fósforo, y al
+ * delta lo que los caños le toman al río (Qtoma) y lo que la ciénaga le devuelve (Qretorno).
  */
 import * as S from './sistema.js';
 
@@ -15,7 +16,7 @@ const Q_MAG_REF = 6800;     // m³/s: caudal medio que el río grande entrega al
 export function salida(p, r) {
   return {
     nodo: 'Ciénaga Grande (laguna costera)',
-    salida: { Q: r.a.Qsale, salinidad: r.S, temperatura: r.ca.Tagua, OD: r.ca.OD, fosforo: r.ca.P, sedimento: 20, nivel: r.z },
+    salida: { Q: r.a.Qsale, salinidad: r.S, temperatura: r.ca.Tagua, OD: r.ca.OD, fosforo: r.ca.P, sedimento: 20, nivel: r.z, Qtoma: r.a.QcIn, Qretorno: r.a.QcOut },
     clima: { anio: p.clima },
   };
 }
@@ -77,5 +78,5 @@ export const entradas = [
 export function mensual(p) {
   const a = S.anoMensual(p);
   const r = S.calcular(p, { ...S.estadoInicial(p), t: 6 * 3600 });
-  return a.meses.map((m) => ({ mes: m.mes, Q: m.Qbout, salinidad: m.S, nivel: m.z, fosforo: r.ca.P, OD: r.ca.ODmin, sedimento: 20 }));
+  return a.meses.map((m) => ({ mes: m.mes, Q: m.Qbout, salinidad: m.S, nivel: m.z, fosforo: r.ca.P, OD: r.ca.ODmin, sedimento: 20, Qtoma: m.QcIn, Qretorno: m.QcOut }));
 }

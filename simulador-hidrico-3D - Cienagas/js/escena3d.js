@@ -128,14 +128,14 @@ export class Escena extends EscenaBase {
     this.nCanosVis = 3;
     this.lechoCanos = -1.6;
     this.anchoCanos = 2.6;
-    this.HmaxCanos = 2.4;
+    this.HmaxCanos = 1.7;
     this.ult = {};
   }
 
   vistasDefs() {
     return {
-      general: { pos: [-25, 375, 390], mira: [-25, 0, -5], etiquetas: ['cienaga', 'salinidad', 'magdalena', 'canos', 'sierra', 'boca', 'mar', 'manglar', 'palafitos'] },
-      canos: { pos: [-110, 95, 135], mira: [-165, 0, 0], etiquetas: ['magdalena', 'canos', 'sedimentos', 'palafitos', 'manglar'] },
+      general: { pos: [-25, 375, 390], mira: [-25, 0, -5], etiquetas: ['cienaga', 'salinidad', 'magdalena', 'canos', 'sierra', 'boca', 'mar', 'manglar', 'palafitos', 'alisios'] },
+      canos: { pos: [-110, 95, 135], mira: [-165, 0, 0], etiquetas: ['magdalena', 'canos', 'sedimentos', 'palafitos', 'manglar', 'alisios'] },
       boca: { pos: [175, 70, 15], mira: [70, 0, -78], etiquetas: ['boca', 'mar', 'carretera', 'manglar', 'cienaga'] },
       palafitos: { pos: [-22, 36, 72], mira: [-62, 2, 14], etiquetas: ['palafitos', 'pesca', 'oxigeno', 'salinidad', 'manglar'] },
     };
@@ -156,6 +156,7 @@ export class Escena extends EscenaBase {
       ['pesca', 'manglar', 'Pesca', 'secundaria'],
       ['oxigeno', 'calidad', 'Oxígeno'],
       ['sedimentos', 'sedimentos', 'Sedimento de los caños', 'secundaria'],
+      ['alisios', 'rios', 'Alisios del noreste', 'secundaria'],
     ];
   }
 
@@ -366,6 +367,8 @@ export class Escena extends EscenaBase {
     this.diques = [];
     this.tapones = [];
     this.plumas = [];
+    this.plumasRio = [];
+    this.colorCanoRio = new THREE.Color(0xa89160);
     for (const [k, c] of this.canos.entries()) {
       const mat = materialAgua(0xa89160, { opacidad: 0.92, repetir: 1, textura: texturaAgua('#e9e2d2', 'rgba(255,255,255,0.75)') });
       mat.map.repeat.set(1, 1);
@@ -401,6 +404,16 @@ export class Escena extends EscenaBase {
       pl.renderOrder = 3;
       this.grupoCanos.add(pl);
       this.plumas.push(pl);
+      // Pluma de agua salobre en el río cuando la ciénaga le devuelve agua
+      const pr = new THREE.Mesh(new THREE.CircleGeometry(1, 32), new THREE.MeshBasicMaterial({ color: 0x5f9c8c, map: this.texPluma, transparent: true, opacity: 0.75, depthWrite: false, toneMapped: false }));
+      pr.rotation.x = -Math.PI / 2;
+      const [xr, zr] = c.pts[0];
+      pr.position.set(xr - 6, 0.2, zr - 3);
+      pr.scale.set(1, 1.8, 1);
+      pr.renderOrder = 3;
+      pr.visible = false;
+      this.grupoCanos.add(pr);
+      this.plumasRio.push(pr);
     }
     this.indexar(this.grupoCanos);
   }
@@ -654,7 +667,7 @@ export class Escena extends EscenaBase {
       const cambiaCanos = nCanos !== this.nCanosVis;
       this.anchoB = anchoB; this.fondoB = fondoB; this.zFondo = p.zFondo; this.nCanosVis = nCanos; this.lechoCanos = lecho;
       this.anchoCanos = anchoC; this.HmaxCanos = Hmax;
-      if (!primera || forma !== '6.50|-9.00|-1.4|3|-1.6|2.6|2.4') this.repintarTerreno(this.malla);
+      if (!primera || forma !== '6.50|-9.00|-1.4|3|-1.6|2.6|1.7') this.repintarTerreno(this.malla);
       if (cambiaCanos || primera) this.firmaManglar = null;
     }
     const yC = r.z * V;
@@ -684,19 +697,28 @@ export class Escena extends EscenaBase {
     this.cintasCanos.forEach((m, k) => {
       const activo = k < p.nCanos && area > 0;
       m.visible = activo;
-      if (activo) moverCinta(m, (t) => mezclar(H, r.z, t) * V + 0.14, ancho);
+      if (activo) moverCinta(m, (t) => mezclar(H, r.q.zC, t) * V + 0.14, ancho);
+      // Agua turbia del Magdalena cuando entra; agua de la ciénaga cuando vuelve al río
+      m.material.color.copy(this.colorCanoRio).lerp(this.matCienaga.color, porCano < 0 ? Math.min(1, 0.45 + Math.sqrt(-porCano) / 6) : 0);
       const fl = this.flujosCanos[k];
       fl.visible = activo && Math.abs(porCano) > 0.3;
       fl.sentido = porCano >= 0 ? 1 : -1;
       fl.velocidad = 3 + 7 * Math.sqrt(Math.abs(porCano) / 10);
       fl.ancho = Math.max(0.4, ancho * 0.7);
-      fl.obj.position.y = ((H - H_REF) + r.z) / 2 * V;
+      fl.obj.position.y = ((H - H_REF) + r.q.zC) / 2 * V;
       this.diques[k].visible = k < p.nCanos && p.estadoCanos === 'cerrados';
       const pl = this.plumas[k];
       const rad = Math.min(12, 2 + 0.3 * Math.sqrt(Math.max(0, porCano) * p.SSmag / 10));
       pl.visible = activo && porCano > 0.3;
       pl.scale.set(rad, rad, 1);
       pl.position.y = yC + 0.06;
+      // Agua salobre que la ciénaga le devuelve al río
+      const pr = this.plumasRio[k];
+      const radR = Math.min(9, 2 + 0.9 * Math.sqrt(Math.max(0, -porCano)));
+      pr.visible = activo && porCano < -0.3;
+      pr.scale.set(radR, radR * 1.8, 1);
+      pr.position.y = H * V + 0.3;
+      pr.material.color.copy(this.matCienaga.color);
     });
     for (const t of this.tapones) {
       t.m.visible = t.k < p.nCanos && p.estadoCanos === 'sedimentados';
@@ -739,8 +761,13 @@ export class Escena extends EscenaBase {
     const estadoCano = S.ESTADOS_CANO[p.estadoCanos]?.nombre.split(' (')[0].toLowerCase() ?? '';
     this.etiqueta('cienaga', `nivel ${conSigno(r.z, 2)} m · ${fmt(r.A / 1e6, 0)} km² · ${fmt(r.h, 2)} m de agua`, r.margenPalafitos >= 0.3 ? 'ok' : 'alerta', [28, yC + 6, -22]);
     this.etiqueta('salinidad', `${fmt(r.S, 1)} PSU ahora · ${fmt(r.a.Smax, 1)} PSU en el peor mes`, nivelSal(r.a.Smax), [8, yC + 6, 46]);
-    this.etiqueta('magdalena', `nivel ${fmt(H, 2)} m.s.n.m.`, 'ok', [XR(60), H * V + 8, 60]);
-    this.etiqueta('canos', p.nCanos > 0 ? `${p.nCanos} ${estadoCano} · ${fmt(r.q.Qc, 1)} m³/s` : 'sin caños', r.a.Qc > 1 ? 'ok' : 'alerta', [-168, 7, this.canos[0].pts[7][1]]);
+    const recibe = r.q.Qc < -0.5 && p.nCanos > 0 && area > 0;
+    // En la vista general el río queda en el borde izquierdo: la etiqueta crece hacia la derecha
+    this.etiquetas.magdalena?.obj.center.set(this.vista === 'canos' ? 0.5 : 0.15, 1);
+    this.etiqueta('magdalena', recibe ? `${fmt(H, 2)} m.s.n.m. · recibe agua de la ciénaga` : `nivel ${fmt(H, 2)} m.s.n.m.`, recibe ? 'aviso' : 'ok', this.vista === 'canos' ? [XR(40) + 26, H * V + 8, 40] : [XR(60), H * V + 8, 60]);
+    const textoCanos = r.q.Qc >= 0 ? `entran ${fmt(r.q.Qc, 1)} m³/s del río` : `vuelven al río ${fmt(-r.q.Qc, 1)} m³/s`;
+    this.etiqueta('canos', p.nCanos > 0 && area > 0 ? `${p.nCanos} ${estadoCano} · ${textoCanos}` : (p.nCanos > 0 ? `${p.nCanos} ${estadoCano}` : 'sin caños'), r.a.Qc > 1 ? (r.q.Qc >= 0 ? 'ok' : 'aviso') : 'alerta', [this.vista === 'canos' ? -150 : -168, 7, this.canos[0].pts[7][1]]);
+    this.etiqueta('alisios', `${fmt(r.q.U, 1)} m/s · el agua sube ${fmt(100 * r.q.dEta / 2, 1)} cm en la orilla de los caños`, 'ok', this.vista === 'canos' ? [-126, yC + 9, 46] : [125, yC + 9, 8]);
     this.etiqueta('sierra', `${fmt(r.q.Qr, 1)} m³/s · ${fmt(p.Qrios, 0)} de media`, 'ok', [235, 52, 40]);
     this.etiqueta('boca', `${miles(r.areaBoca)} m² · ${r.q.Qb >= 0 ? 'entra' : 'sale'} ${fmt(Math.abs(r.q.Qb), 0)} m³/s`, r.areaBoca >= 300 ? 'ok' : 'alerta', [86, 7, -64]);
     this.etiqueta('mar', `marea ${conSigno(eta, 2)} m · ${fmt(p.Smar, 1)} PSU`, 'ok', [-10, eta * V + 5, -150]);
@@ -751,7 +778,7 @@ export class Escena extends EscenaBase {
     this.etiqueta('pesca', `índice ${fmt(r.pesca, 2)}`, r.pesca >= 0.6 ? 'ok' : 'aviso', [-28, yC + 3.5, 30]);
     this.etiqueta('oxigeno', `${fmt(r.ca.OD, 1)} mg/L ahora · ${fmt(r.ca.ODmin, 1)} en la madrugada`, r.ca.ODmin >= 4 ? 'ok' : (r.ca.ODmin >= 2 ? 'aviso' : 'alerta'), [-38, yC + 4, -4]);
     const [xs, zs] = this.canos[0].pts[this.canos[0].pts.length - 1];
-    this.etiqueta('sedimentos', `${fmt(r.sed.mm, 1)} mm/año de fondo`, r.sed.mm <= 5 ? 'ok' : 'aviso', [xs + 10, yC + 4, zs]);
+    this.etiqueta('sedimentos', `${fmt(r.sed.mm, 1)} mm/año de fondo`, r.sed.mm <= 5 ? 'ok' : 'aviso', [xs - 2, yC + 4, zs + 4]);
   }
 
   irAVista(nombre, inmediato) {

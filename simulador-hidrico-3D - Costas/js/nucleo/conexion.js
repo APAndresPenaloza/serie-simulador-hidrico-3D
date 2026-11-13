@@ -33,9 +33,10 @@ export const PROYECTOS = [
 /**
  * Red de la serie: de quién recibe cada proyecto y a quién entrega. El agua baja de la
  * laguna al lago, al río y a la ciénaga; la ciénaga y el delta se dan agua el uno al otro (el
- * río grande entra a la ciénaga por los caños y la ciénaga sale al mar junto a la boca del
- * delta); el delta le da sedimento a la costa y agua dulce al océano; el océano fija la marea,
- * el oleaje, el nivel del mar y la salinidad de la ciénaga, el delta y la costa.
+ * río grande entra a la ciénaga por los caños en la creciente, la ciénaga le devuelve agua por
+ * los mismos caños en el estiaje y sale al mar junto a la boca del delta); el delta le da
+ * sedimento a la costa y agua dulce al océano; el océano fija la marea, el oleaje, el nivel del
+ * mar y la salinidad de la ciénaga, el delta y la costa.
  */
 export const RED = {
   lagunas: { recibe: [], entrega: ['lagos'] },
@@ -61,6 +62,8 @@ export const MAGNITUDES = {
   nitrogeno: { nombre: 'Nitrógeno', unidad: 'mg/L' },
   fosforo: { nombre: 'Fósforo total', unidad: 'µg/L' },
   nivel: { nombre: 'Nivel del agua', unidad: 'm' },
+  Qtoma: { nombre: 'Caudal que la ciénaga toma del río por los caños', unidad: 'm³/s' },
+  Qretorno: { nombre: 'Caudal que la ciénaga devuelve al río por los caños', unidad: 'm³/s' },
 };
 
 export const MAGNITUDES_MAR = {

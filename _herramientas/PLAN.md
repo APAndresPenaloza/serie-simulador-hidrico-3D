@@ -42,7 +42,23 @@ valores de referencia editables; cada pestaña: intro, controles, Resultados, Re
 matemático (forma general + sustitución), 1–2 gráficas con el punto actual. Pestañas Datos (Excel) y Conexión.
 
 ## Estado (actualizar al avanzar)
-- Lagunas ✓ 30 · Lagos ✓ 23 · Ciénagas ✓ 22 · Deltas ✓ 21 · Costas ✓ 22 · Océanos ✓ 21 · Sistema conectado ✓ 26 pruebas.
+- Lagunas ✓ 30 · Lagos ✓ 25 · Ciénagas ✓ 27 · Deltas ✓ 21 · Costas ✓ 22 · Océanos ✓ 25 · Sistema conectado ✓ 26 pruebas (2026-11-13).
+- 2026-11-13 · Ciénaga: caños en los dos sentidos (el río la llena en la creciente; la ciénaga le devuelve agua en el
+  estiaje). Magdalena frente a los caños con piso en el nivel del mar (máx) y κ = 0.5 de la marea; alisios que inclinan
+  el agua (Δη = C_D·(ρa/ρ)·U²·L/(g·h): +Δη/2 en los caños, −Δη/2 en la boca). Base: 43 días de retorno (abril neto < 0),
+  Smax 32.5 PSU; criterio del mangle rojo cambiado a «estrés ≤ 25 %». Escenario «estiaje» (15 de abril, 08:00).
+  Contrato v1 + Qtoma y Qretorno (núcleo y copia del río); el delta resta Qcanos = Qtoma − Qretorno en Bocas de Ceniza;
+  Sistema conectado: m_DC = QcOut/QD, det = 1 − m35·m53 − m35·m54·m43, lazo en 5 iteraciones, 81 criterios.
+- 2026-11-13 · Océanos: pestaña «Bosque de niebla» (Serranía de Macuira): Magnus, z_b = 125(T − T_d), LWC por tramos,
+  F = η·LWC·U; calibrado con Cavelier y Goldstein (1989): 804 mm de niebla vs 850 de lluvia; atrapanieblas wayuu; vista
+  Macuira. 8 criterios. Lagos: pestaña «Peces» con trucha (exótica), capitán de la sabana y guapucha (nativos; valores
+  de la guapucha supuestos); trucha 7.32 kg P/t (Torres-Barrera y Grandas-Rincón, 2017); 15 criterios.
+- Los index.html tienen el pie que el usuario editó a mano: los «pie» de proyecto.json se igualaron para que
+  sincronizar.mjs no lo pise.
+- 2026-11-13 · Documentos regenerados (informe y manual) de Ciénagas, Océanos, Lagos, Deltas y Sistema conectado.
+  extraer.cjs dibuja la escena 3D a pedido (sin ciclo continuo): con SwiftShader y 2 núcleos el ciclo dejaba sin tiempo
+  a las capturas. graficas.py usa una lista de familias (Liberation Serif → DejaVu Serif) para los superíndices ⁺ ⁻.
+  Manual de ríos (PDF): imágenes JPEG recomprimidas (calidad 72, máx. 1 700 px de ancho): 25.5 MB → 16.6 MB.
 - Contrato v1 ampliado: MAGNITUDES_MAR.ascenso (mm/año, derivada del ascenso del océano) → deltas/costas ascensoMar.
 - RED: deltas también entrega a cienagas (caños). Prueba común revisa la red en los dos sentidos (salvo «sistema»).
 - Entradas que ya traen el clima se dividen por el factor climático del que recibe (ciénaga fRios/dH, costas fOla/fAporte).

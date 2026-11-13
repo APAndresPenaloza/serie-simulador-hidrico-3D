@@ -6,5 +6,5 @@
   "etiquetaEscena": "Vista 3D de la playa",
   "ayuda": "Arrastra para girar la vista y usa la rueda o dos dedos para acercar. Toca un componente para ver sus controles; con los botones de arriba vas a la rompiente, al corte del perfil de la playa o al emisario submarino.",
   "leyenda": "<span class=\"muestra muestra-flujo\"></span>Espuma y crestas <span class=\"muestra muestra-ocre\"></span>Arena <span class=\"muestra muestra-salado\"></span>Agua de mar <span class=\"nota\">Distancias a escala (1 unidad = 10 m); alturas y profundidades exageradas ×10.</span>",
-  "pie": "Proyecto de Álgebra y Geometría Analítica, 2026-II · Serie de simuladores hídricos 3D. g = 9.81 m/s²; ρ = 1 025 kg/m³ (agua de mar)."
+  "pie": "Proyecto de Álgebra y Geometría Analítica, Álgebra lineal aplicada e Introducción a las ciencias del agua y a la tecnología, 2026-II · Serie de simuladores hídricos 3D. g = 9.81 m/s²; ρ = 1 025 kg/m³ (agua de mar)."
 }

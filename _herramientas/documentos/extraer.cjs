@@ -14,13 +14,24 @@ const path = require('path');
   const errores = [];
   const abrir = async (w, h, dsf = 1.5) => {
     const page = await browser.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: dsf });
+    page.setDefaultTimeout(180000);
     page.on('pageerror', (e) => errores.push('PAGEERROR ' + e.message));
     page.on('console', (m) => { if (m.type() === 'error' && !m.text().includes('ERR_TUNNEL')) errores.push('console ' + m.text()); });
     await page.goto(url, { waitUntil: 'load' });
     await page.waitForFunction(() => window.__sim && document.documentElement.dataset.listo === '1', null, { timeout: 30000 });
     // Reiniciar y pausar en la misma tarea: el reloj queda exactamente al inicio del escenario base
     await page.evaluate(() => { window.__sim.reiniciar(); window.__sim.pausar(); document.getElementById('ayuda')?.classList.add('oculta'); });
-    await page.waitForTimeout(1200);
+    // La escena 3D se dibuja a pedido y no en un ciclo continuo: en máquinas sin GPU (SwiftShader)
+    // el ciclo deja sin tiempo a la captura de pantalla. __dibujar(n) termina el vuelo de la cámara
+    // y dibuja n cuadros.
+    await page.evaluate(() => {
+      const e = window.__sim.escena;
+      if (!e?.renderer) { window.__dibujar = () => {}; return; }
+      e.renderer.setAnimationLoop(null);
+      window.__dibujar = (n = 3) => { for (let i = 0; i < n; i++) { if (e.vuelo) e.vuelo.t = 1; e.animar(); } };
+      window.__dibujar(3);
+    });
+    await page.waitForTimeout(600);
     return page;
   };
 
@@ -85,15 +96,17 @@ const path = require('path');
 
   // ── 2. Capturas de la pantalla y de las vistas ─────────────────────────────
   page = await abrir(1600, 1000);
+  await page.evaluate(() => window.__dibujar(3));
   await page.screenshot({ path: path.join(out, 'img', 'pantalla.png') });
   await page.locator('header.barra').screenshot({ path: path.join(out, 'img', 'barra.png') });
   for (const v of datos.vistas) {
-    await page.evaluate((id) => window.__sim.vista(id), v.id);
-    await page.waitForTimeout(1600);
+    await page.evaluate((id) => { window.__sim.vista(id); window.__dibujar(3); }, v.id);
+    await page.waitForTimeout(400);
     await page.locator('#escena').screenshot({ path: path.join(out, 'img', `vista_${v.id}.png`) });
   }
   await page.close();
   page = await abrir(390, 844, 2);
+  await page.evaluate(() => window.__dibujar(3));
   await page.screenshot({ path: path.join(out, 'img', 'movil.png') });
   await page.close();
 
@@ -145,7 +158,8 @@ const path = require('path');
     await page.evaluate((id) => { window.__sim.escenario(id); }, e.id);
     const vista = datos.vistas[0]?.id;
     if (vista) await page.evaluate((v) => window.__sim.vista(v), vista);
-    await page.waitForTimeout(1500);
+    await page.evaluate(() => window.__dibujar(3));
+    await page.waitForTimeout(400);
     await page.screenshot({ path: path.join(out, 'img', `esc_${e.id}.png`) });
   }
   await page.close();

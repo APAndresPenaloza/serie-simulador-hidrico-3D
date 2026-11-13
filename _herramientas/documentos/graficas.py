@@ -7,8 +7,9 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt  # noqa: E402
 
 plt.rcParams.update({
-    'font.family': 'serif',
-    'font.serif': ['Liberation Serif', 'Times New Roman', 'DejaVu Serif'],
+    # Lista de familias: matplotlib busca en la siguiente los signos que no tenga la primera
+    # (por ejemplo, los superíndices ⁺ y ⁻ que Liberation Serif no trae)
+    'font.family': ['Liberation Serif', 'DejaVu Serif'],
     'font.size': 8.5,
     'axes.titlesize': 9,
     'axes.labelsize': 8.5,
