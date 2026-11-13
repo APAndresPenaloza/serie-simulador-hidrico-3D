@@ -365,6 +365,7 @@ export function iniciarSimulador(def) {
     sincronizarControles(origen);
     pintarPanel(true);
     pintarEstados();
+    pintarReloj(); // un escenario puede mover el reloj aunque la simulación esté en pausa
     escena?.actualizar(p, r, sim);
     publicarEnVivo();
   }

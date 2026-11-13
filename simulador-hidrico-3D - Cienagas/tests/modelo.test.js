@@ -45,6 +45,26 @@ test('Raíz cuadrada: caudal y velocidad por una abertura', () => {
   cerca(M.caudalAbertura(1, 1, 0.4) / M.caudalAbertura(1, 1, 0.1), 2, 1e-12);
 });
 
+test('Signo del caudal: lo que entra del río y lo que vuelve al río', () => {
+  // Q = Q⁺ − Q⁻: con 30 m³/s entra todo; con −12 m³/s la ciénaga devuelve 12 al río
+  assert.deepEqual(M.partes(30), { entra: 30, sale: 0 });
+  assert.deepEqual(M.partes(-12), { entra: 0, sale: 12 });
+  // Con el desnivel al revés, el mismo caño lleva el mismo caudal en el otro sentido
+  cerca(M.caudalAbertura(0.4, 25, -0.2, 0.02), -M.caudalAbertura(0.4, 25, 0.2, 0.02), 1e-12);
+});
+
+test('Cuadrática y racional: el viento inclina la ciénaga', () => {
+  // τ = 1.2 × 0.0013 × 6² = 0.05616 Pa
+  cerca(M.esfuerzoViento(6), 0.05616, 1e-12);
+  // Δη = τ·L/(ρ·g·h) = 0.05616 × 25 000/(1000 × 9.81 × 1.5) = 0.09541 m
+  cerca(M.setupViento(6, 25000, 1.5), 0.05616 * 25000 / (1000 * 9.81 * 1.5), 1e-12);
+  cerca(M.setupViento(6, 25000, 1.5), 0.095413, 1e-6);
+  // El doble de viento inclina cuatro veces más; la mitad de profundidad, el doble
+  cerca(M.setupViento(12, 25000, 1.5) / M.setupViento(6, 25000, 1.5), 4, 1e-12);
+  cerca(M.setupViento(6, 25000, 0.75) / M.setupViento(6, 25000, 1.5), 2, 1e-12);
+  assert.equal(M.setupViento(0, 25000, 1.5), 0);
+});
+
 test('Periódicas: marea, número de forma y creciente del Magdalena', () => {
   cerca(M.marea(0, { K1: 1 }), 1, 1e-12);
   cerca(M.marea(23.934 / 2, { K1: 1 }), -1, 1e-12);

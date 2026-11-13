@@ -57,6 +57,26 @@ export const tiempoResidencia = (V, Q) => (Q > 0 ? V / Q : Infinity);
 export const caudalAbertura = (C, A, dh, delta = 0) => (A <= 0 ? 0 : (C * A * Math.sqrt(2 * G) * dh) / Math.sqrt(Math.abs(dh) + delta));
 /** Velocidad en la abertura v = C·√(2g·Δh). */
 export const velocidadAbertura = (C, dh) => C * Math.sqrt(2 * G * Math.abs(dh));
+/**
+ * Un caudal con signo se parte en lo que entra y lo que sale: Q = Q⁺ − Q⁻, con
+ * Q⁺ = máx(0, Q) (el río entra a la ciénaga) y Q⁻ = máx(0, −Q) (la ciénaga devuelve agua al río).
+ */
+export const partes = (Q) => ({ entra: Math.max(0, Q), sale: Math.max(0, -Q) });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 3b. EL VIENTO INCLINA LA CIÉNAGA (cuadrática y racional)
+// ═══════════════════════════════════════════════════════════════════════════
+export const RHO_AIRE = 1.2;      // kg/m³
+export const CD_VIENTO = 1.3e-3;  // coeficiente de arrastre del viento sobre el agua
+/** Esfuerzo del viento sobre el agua τ = ρ_a·C_D·U² [Pa]: cuadrática en la velocidad del viento. */
+export const esfuerzoViento = (U, Cd = CD_VIENTO) => RHO_AIRE * Cd * U * U;
+/**
+ * Inclinación del agua por el viento (set-up) en una cubeta somera de largo L y profundidad h:
+ * Δη = τ·L/(ρ·g·h) = C_D·(ρ_a/ρ)·U²·L/(g·h). El agua sube Δη/2 en la orilla hacia donde sopla
+ * el viento y baja Δη/2 en la orilla de donde viene. Cuadrática en U y racional en h (asíntota
+ * en h = 0: en una ciénaga muy baja el viento inclina mucho el agua).
+ */
+export const setupViento = (U, L, h, Cd = CD_VIENTO, rho = 1000) => (esfuerzoViento(U, Cd) * L) / (rho * G * Math.max(0.1, h));
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 4. MAREA Y CRECIENTE DEL MAGDALENA (periódicas)
