@@ -17,6 +17,10 @@
  *   6. Potencia y racionales → hipsometría A(z) = A₀·(1 − z/z_máx)^m, fósforo de Vollenweider
  *                    P = P_in/(1 + √τ), tiempo de residencia τ = V/Q, número de Wedderburn.
  *   7. Periódicas  → temperatura de la superficie en el año y oscilación de las seiches.
+ *   8. Cultivo de peces en jaulas → factor térmico por tramos y cuadrático (parábola con el
+ *                    vértice en la temperatura óptima de cada especie), crecimiento exponencial
+ *                    W(t) = W₀·e^(G·t), días a la cosecha t = ln(W_f/W₀)/G (logarítmica) y fósforo
+ *                    que queda en el lago por tonelada producida L_P = 1000·(FCA·p_a − p_p) (lineal).
  */
 
 export const G = 9.81;
@@ -142,3 +146,28 @@ export const fraccionLuz = (k, z) => Math.exp(-k * z);
 export const zonaFotica = (k) => Math.log(100) / k;
 /** Demanda de oxígeno del hipolimnion según la clorofila (referencia) [g O₂/m²·día]. */
 export const demandaHipolimnion = (Chl) => 0.15 + 0.05 * Chl;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 8. CULTIVO DE PECES EN JAULAS (por tramos, cuadrática, exponencial, logarítmica y lineal)
+// ═══════════════════════════════════════════════════════════════════════════
+/**
+ * Factor térmico del crecimiento (por tramos y cuadrático): 1 en la temperatura óptima, baja como
+ * una parábola hacia cada lado y es 0 fuera del rango [T_mín, T_máx] de la especie:
+ * f(T) = 1 − ((T_opt − T)/(T_opt − T_mín))² si T ≤ T_opt; 1 − ((T − T_opt)/(T_máx − T_opt))² si T > T_opt.
+ */
+export function factorTermico(T, Topt, Tmin, Tmax) {
+  if (T <= Tmin || T >= Tmax) return 0;
+  const a = T <= Topt ? (Topt - T) / (Topt - Tmin) : (T - Topt) / (Tmax - Topt);
+  return Math.max(0, 1 - a * a);
+}
+/** Crecimiento exponencial con la tasa específica G [1/día]: W(t) = W₀·e^(G·t). */
+export const pesoPez = (W0, G, t) => W0 * Math.exp(G * t);
+/** Días para pasar del peso de siembra al de cosecha (logarítmica): t = ln(W_f/W₀)/G. */
+export const diasCosecha = (W0, Wf, G) => (G > 0 ? Math.log(Wf / W0) / G : Infinity);
+/**
+ * Fósforo que queda en el lago por tonelada de pez producida (balance lineal): entra con el
+ * alimento FCA·p_a y sale con el pescado p_p; L_P = 1000·(FCA·p_a − p_p) [kg P/t].
+ */
+export const fosforoPorTonelada = (FCA, pAlimento, pPez) => 1000 * (FCA * pAlimento - pPez);
+/** Producción que aguanta el lago (racional): la carga que sobra para llegar a la admisible, dividida por L_P [t/año]. */
+export const produccionMaxima = (cargaLibre, LP) => (LP > 0 ? Math.max(0, cargaLibre) / LP : Infinity);

@@ -6,5 +6,5 @@
   "etiquetaEscena": "Vista 3D del delta",
   "ayuda": "Arrastra para girar la vista y usa la rueda o dos dedos para acercar. Toca un componente para ver sus controles; con los botones de arriba vas a la boca con el puerto, al corte de la cuña salina o al Canal del Dique.",
   "leyenda": "<span class=\"muestra muestra-flujo\"></span>Agua que fluye <span class=\"muestra muestra-ocre\"></span>Agua turbia del río <span class=\"muestra muestra-salado\"></span>Agua salada <span class=\"nota\">Distancias a escala (1 unidad = 120 m), salvo los anchos de los cauces; en el corte, profundidades exageradas ×120.</span>",
-  "pie": "Proyecto de Álgebra y Geometría Analítica, 2026-II · Serie de simuladores hídricos 3D. Δρ/ρ ≈ 0.00078·S; κ = 0.41; g = 9.81 m/s²."
+  "pie": "Proyecto de Álgebra y Geometría Analítica, Álgebra lineal aplicada e Introducción a las ciencias del agua y a la tecnología, 2026-II · Serie de simuladores hídricos 3D. Δρ/ρ ≈ 0.00078·S; κ = 0.41; g = 9.81 m/s²."
 }

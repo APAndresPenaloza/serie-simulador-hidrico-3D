@@ -50,6 +50,7 @@ export const PARAMETROS = {
   Smar: 36, Ci: 2.5e-4, xToma: 4,
   // Pluma
   hPluma: 3, wsPluma: 0.35, Cvis: 20, Qcienaga: 250,
+  Qcanos: 0,                 // m³/s: lo que los caños de la ciénaga le toman al río, neto (negativo: se lo devuelven)
   // El delta
   fRetencion: 0.25,          // parte del sedimento que se queda en el frente del delta
   anchoFrente: 10,           // km
@@ -97,7 +98,9 @@ export function forzantes(p, t, h, L = 0) {
   const C = M.concentracion(Q, p.Qm, p.C0, p.bSed);
   const fD = fraccionDique(p);
   const Qd = fD * Q;
-  const Qp = Q - Qd;
+  // Lo que sale por Bocas de Ceniza: el río menos el Dique y menos lo que los caños de la
+  // ciénaga le toman (más lo que la ciénaga le devuelve en el estiaje).
+  const Qp = Math.max(0, Q - Qd - (p.Qcanos ?? 0));
   const U = Qp / (p.anchoCanal * h);
   const heq = limitar(M.profundidadRegimen(Qp, p.anchoCanal, p.Uc), 1, p.profMaxCanal);
   const gp = M.gReducida(p.Smar);

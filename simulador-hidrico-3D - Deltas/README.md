@@ -2,7 +2,7 @@
 
 Aplicación web interactiva que simula el delta de un gran río, con valores de referencia inspirados en el delta del río Magdalena en Bocas de Ceniza (Barranquilla): el caudal del año y la curva de sedimento, el reparto del agua entre el cauce principal y el Canal del Dique, la avulsión, la cuña salina que entra por el fondo del canal y puede llegar a la bocatoma del acueducto, la pluma turbia que se abre mar adentro, el avance del frente del delta frente al oleaje y al ascenso relativo del mar, el transporte litoral de arena, el tipo de delta y el dragado del canal de acceso al puerto.
 
-Es el quinto eslabón de la serie de simuladores hídricos 3D: recibe de la ciénaga el agua que sale por la Boca de la Barra y del océano el oleaje, la marea, el nivel medio, la rapidez con que sube el mar y la salinidad; entrega a la costa y al océano el caudal medio del río y su sedimento.
+Es el quinto eslabón de la serie de simuladores hídricos 3D: recibe de la ciénaga el agua que sale por la Boca de la Barra y el intercambio por los caños (lo que la ciénaga le toma al río en la creciente menos lo que le devuelve en el estiaje), y del océano el oleaje, la marea, el nivel medio, la rapidez con que sube el mar y la salinidad; entrega a la costa y al océano el caudal medio del río y su sedimento.
 
 La escena 3D muestra el río que baja del sur y sale al mar entre dos tajamares con sus faros, la ciudad y el puerto con sus grúas y buques en la orilla occidental, la bocatoma del acueducto, la draga, el Canal del Dique con su compuerta, la llanura del delta con su manglar y la ciénaga al oriente, la pluma café que se aclara mar adentro con la misma exponencial del modelo, las crestas de las olas que llegan en ángulo a la costa y la línea del frente del delta dentro de 50 años (blanca si avanza, roja si retrocede). Tiene cuatro vistas (Delta, Boca, Corte y Brazos). En la vista Corte la mitad oriental se recorta como una maqueta y se ve, a lo largo del canal, la cuña salina metida por debajo del agua del río. Si el canal no alcanza el calado, el buque espera afuera.
 
@@ -65,7 +65,7 @@ Delta de referencia, sequía de El Niño (la cuña llega a 4.79 km y pasa la boc
 
 ## Datos y conexión
 
-«Descargar Excel (.xlsx)» crea `simulacion-deltas_AAAA-MM-DD_HH-MM.xlsx` con ocho hojas: Resumen, Parámetros y resultados, Serie de tiempo, Revisión del diseño, Cuña salina (con fórmulas), Sedimento y delta (con fórmulas), Año mes a mes y Conexión. La pestaña Conexión recibe la frontera de la ciénaga (su caudal por la Boca de la Barra) y la del océano (oleaje, marea, nivel medio, rapidez del ascenso del mar y salinidad), y entrega a la costa y al océano el caudal medio del año que llega al mar, con su concentración y su carga de sedimento.
+«Descargar Excel (.xlsx)» crea `simulacion-deltas_AAAA-MM-DD_HH-MM.xlsx` con ocho hojas: Resumen, Parámetros y resultados, Serie de tiempo, Revisión del diseño, Cuña salina (con fórmulas), Sedimento y delta (con fórmulas), Año mes a mes y Conexión. La pestaña Conexión recibe la frontera de la ciénaga (su caudal por la Boca de la Barra y, por los caños, lo que le toma al río y lo que le devuelve: el neto se descuenta del caudal que sale por Bocas de Ceniza) y la del océano (oleaje, marea, nivel medio, rapidez del ascenso del mar y salinidad), y entrega a la costa y al océano el caudal medio del año que llega al mar, con su concentración y su carga de sedimento.
 
 ## Probar en el computador
 

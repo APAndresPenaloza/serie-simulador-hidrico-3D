@@ -21,14 +21,15 @@ const TABS = [
   { id: 'morfometria', nombre: 'Morfometría', graficas: 2, tablas: true, intro: 'La forma de la cubeta decide cuánta agua guarda el lago y cómo se reparte en profundidad. La curva hipsométrica dice el área a cada profundidad: A(z) = A₀·(1 − z/z_máx)^m. Con m = 1 la cubeta sería un cono; con m < 1 las orillas son más empinadas y el lago guarda más agua. De ahí salen el volumen, la profundidad media y los índices de forma de la limnología.' },
   { id: 'temperatura', nombre: 'Temperatura', graficas: 2, tablas: true, intro: 'El sol calienta la capa de arriba (epilimnion) y el agua tibia, más liviana, flota sobre el agua fría del fondo (hipolimnion): el lago se estratifica. La densidad del agua es una parábola con su máximo en 4 °C, así que entre 11 y 14 °C la diferencia de densidad es pequeña y la estratificación de un lago tropical de montaña es débil. Aquí se ven el perfil de temperatura, la densidad y cómo cambia la superficie en el año.' },
   { id: 'viento', nombre: 'Viento', graficas: 2, intro: 'El viento empuja el agua de la superficie hacia la orilla de sotavento e inclina la termoclina en sentido contrario. El número de Wedderburn compara la estratificación con el empuje del viento: si es menor que 1, el viento levanta el agua del fondo hasta la superficie y el lago se mezcla. Cuando el viento para, el lago se mece como el agua de una bañera: son las seiches, en la superficie (minutos) y en la termoclina (días).' },
-  { id: 'oxigeno', nombre: 'Oxígeno', graficas: 2, intro: 'Mientras el lago está estratificado, el hipolimnion no toca el aire: las bacterias que descomponen las algas muertas gastan su oxígeno y nadie lo repone. El consumo por metro cuadrado de fondo (la demanda del hipolimnion) crece con las algas, y el oxígeno baja en línea recta hasta que el viento vuelve a mezclar el lago. Sin oxígeno el fondo suelta fósforo y la trucha se queda sin espacio.' },
-  { id: 'nutrientes', nombre: 'Nutrientes', graficas: 2, tablas: true, intro: 'El fósforo es el nutriente que limita las algas del lago. Llega de la cuenca, de la cebolla abonada con gallinaza, de las jaulas de trucha y de las aguas residuales de los pueblos, y del fondo cuando se queda sin oxígeno. Con el modelo de Vollenweider se calcula el fósforo del lago y, con el índice de Carlson, la clorofila y la transparencia que se esperan.' },
+  { id: 'oxigeno', nombre: 'Oxígeno', graficas: 2, intro: 'Mientras el lago está estratificado, el hipolimnion no toca el aire: las bacterias que descomponen las algas muertas gastan su oxígeno y nadie lo repone. El consumo por metro cuadrado de fondo (la demanda del hipolimnion) crece con las algas, y el oxígeno baja en línea recta hasta que el viento vuelve a mezclar el lago. Sin oxígeno el fondo suelta fósforo y los peces se quedan sin espacio.' },
+  { id: 'peces', nombre: 'Peces', graficas: 2, tablas: true, intro: 'En las jaulas del lago se puede criar la trucha arcoíris, que vino de Norteamérica (llegó a Tota en 1939 y desde 2005 se cría en jaulas), o peces nativos de los Andes colombianos: el capitán de la sabana, un bagre del altiplano Cundiboyacense que está en la lista de especies vulnerables, y la guapucha, un pez pequeño que se comía asado con maíz tostado. Cada especie crece mejor cerca de su temperatura óptima, necesita un oxígeno mínimo y convierte el alimento en carne con distinta eficiencia: lo que no se vuelve pescado queda en el lago como fósforo. En Tota, que desagua al Orinoco, los dos nativos llegaron en el siglo XX desde la cuenca del Magdalena; el único pez propio del lago, el pez graso, se considera extinto.' },
+  { id: 'nutrientes', nombre: 'Nutrientes', graficas: 2, tablas: true, intro: 'El fósforo es el nutriente que limita las algas del lago. Llega de la cuenca, de la cebolla abonada con gallinaza, de las jaulas de peces y de las aguas residuales de los pueblos, y del fondo cuando se queda sin oxígeno. Con el modelo de Vollenweider se calcula el fósforo del lago y, con el índice de Carlson, la clorofila y la transparencia que se esperan.' },
 ];
 
 const CONTROLES = [
   { tab: 'cuenca', grupo: 'Escenario' },
   { tab: 'cuenca', id: 'escenario', clave: 'escenario', etiqueta: 'Escenario', tipo: 'opciones', opciones: opciones(S.ESCENARIOS), escribir: () => {}, alCambiar: (v, p, sim, ctx) => ctx.aplicarEscenario(v),
-    doc: 'Pone a la vez los valores de un caso de estudio (El Niño, La Niña, más cebolla, más truchas, aguas residuales sin tratar, calentamiento o más extracción) sobre el escenario de referencia.' },
+    doc: 'Pone a la vez los valores de un caso de estudio (El Niño, La Niña, más cebolla, más truchas, jaulas de capitán de la sabana o de guapucha, aguas residuales sin tratar, calentamiento o más extracción) sobre el escenario de referencia.' },
   { tab: 'cuenca', grupo: 'Lluvia y clima' },
   { tab: 'cuenca', id: 'clima', clave: 'clima', etiqueta: 'Clima del año', tipo: 'opciones', opciones: opciones(S.CLIMAS),
     extra: (v) => `Lluvia × ${fmt(S.CLIMAS[v].fLluvia, 1)} y aire ${conSigno(S.CLIMAS[v].dT, 1)} °C frente a un año normal.`, doc: 'Año normal, El Niño (40 % menos lluvia, 0.8 °C más) o La Niña (40 % más lluvia, 0.4 °C menos).' },
@@ -73,7 +74,12 @@ const CONTROLES = [
 
   { tab: 'nutrientes', grupo: 'Fuentes de fósforo' },
   { tab: 'nutrientes', id: 'areaCebolla', clave: 'areaCebolla', etiqueta: 'Cebolla con gallinaza en la cuenca', unidad: 'ha', min: 0, max: 8000, paso: 50, dec: 0, doc: 'Exporta 1 kg de fósforo por hectárea al año (referencia).' },
-  { tab: 'nutrientes', id: 'truchas', clave: 'truchas', etiqueta: 'Producción de trucha en jaulas', unidad: 't/año', min: 0, max: 1500, paso: 10, dec: 0, doc: '10 kg de fósforo del alimento por tonelada.' },
+  { tab: 'peces', grupo: 'Cultivo en jaulas' },
+  { tab: 'peces', id: 'especie', clave: 'especie', etiqueta: 'Especie que se cría', tipo: 'opciones', opciones: opciones(S.ESPECIES),
+    extra: (v) => { const e = S.ESPECIES[v]; return `${e.cientifico}. ${e.origen}. Óptimo de ${fmt(e.Topt, 0)} °C (de ${fmt(e.Tmin, 0)} a ${fmt(e.Tmax, 0)} °C), oxígeno mínimo de ${fmt(e.ODmin, 0)} mg/L, conversión de alimento de ${fmt(e.FCA, 1)}${e.datos === 'supuestos' ? ' (valores supuestos: no hay datos publicados de su cultivo)' : ''}.`; },
+    doc: 'La trucha es la referencia (exótica); el capitán de la sabana y la guapucha son peces nativos del altiplano Cundiboyacense.' },
+  { tab: 'peces', id: 'peces', clave: 'peces', etiqueta: 'Producción de pescado en jaulas', unidad: 't/año', min: 0, max: 1500, paso: 10, dec: 0, extra: (v, p, r) => `${fmt(r.cultivo.LP, 1)} kg de fósforo por tonelada: ${miles(r.nu.fuentes.jaulas)} kg/año al lago.` },
+  { tab: 'peces', id: 'pAlimento', clave: 'pAlimento', etiqueta: 'Fósforo del alimento', unidad: '%', min: 0.4, max: 1.6, paso: 0.01, dec: 2, doc: 'Alimentos con menos fósforo dejan menos fósforo en el lago.' },
   { tab: 'nutrientes', id: 'habitantes', clave: 'habitantes', etiqueta: 'Habitantes que vierten al lago', unidad: 'hab', min: 0, max: 60000, paso: 500, dec: 0, doc: '0.6 kg de fósforo por habitante al año.' },
   { tab: 'nutrientes', id: 'remocion', clave: 'remocion', etiqueta: 'Fósforo que quitan las plantas de tratamiento', unidad: '%', min: 0, max: 95, paso: 1, dec: 0, doc: 'Con 0 % las aguas residuales llegan sin tratar.' },
 ];
@@ -84,6 +90,7 @@ function estados(p, r) {
     { id: 'nivel', nombre: 'Nivel', nivel: des ? 'ok' : (r.nivel.eta > -0.3 ? 'aviso' : 'alerta'), texto: des ? `Lago: ${fmt(r.nivel.eta, 2)} m sobre el desagüe, sale ${fmt(r.q.Qdesague, 2)} m³/s` : `Lago: ${fmt(Math.abs(r.nivel.eta), 2)} m bajo el umbral, no desagua` },
     { id: 'estratificacion', nombre: 'Estratificación', nivel: r.oxigeno.surgenciaAnoxica ? 'alerta' : 'ok', texto: r.tr.mezcla || r.oxigeno.ventarron ? (r.oxigeno.surgenciaAnoxica ? 'Surgencia: el viento sube agua sin oxígeno' : `Lago mezclado por el viento (W = ${fmt(r.tr.W, 2)})`) : `Estratificado (W = ${fmt(r.tr.W, 2)}, ${fmt(r.oxigeno.diasDesdeMezcla, 0)} días sin mezclarse)` },
     { id: 'oxigeno', nombre: 'Oxígeno del fondo', nivel: r.oxigeno.ODh >= 5 ? 'ok' : (r.oxigeno.ODh >= 2 ? 'aviso' : 'alerta'), texto: r.oxigeno.ODh >= 2 ? `Fondo: ${fmt(r.oxigeno.ODh, 2)} mg/L de oxígeno` : `Fondo sin oxígeno (${fmt(r.oxigeno.ODh, 2)} mg/L)` },
+    { id: 'peces', nombre: 'Peces', nivel: r.cultivo.fHoy >= 0.5 && p.peces <= r.cultivo.prodMax ? 'ok' : 'aviso', texto: `Jaulas: ${miles(p.peces)} t/año de ${r.cultivo.nombre.split(' (')[0].toLowerCase()}, cosecha en ${miles(r.cultivo.dias)} días` },
     { id: 'trofico', nombre: 'Estado trófico', nivel: r.nu.tsi < 40 ? 'ok' : (r.nu.tsi < 50 ? 'ok' : (r.nu.tsi < 60 ? 'aviso' : 'alerta')), texto: `${r.nu.clase[0].toUpperCase()}${r.nu.clase.slice(1)}: P = ${fmt(r.nu.P, 1)} µg/L, Secchi ${fmt(r.nu.DS, 1)} m` },
   ];
 }
@@ -269,7 +276,7 @@ const PINTORES = {
         ['Pendiente del oxígeno del fondo', (1000 * AHOD) / r.mo.hh / 1000, 'mg/L por día', '', 4, 'AHOD/h_h.'],
         ['Días hasta la anoxia (2 mg/L)', o.diasAnoxiaRest, 'días', '', 0, 't = (OD − 2)·h_h/AHOD.'],
         ['Días sin oxígeno en el año', r.ano.diasAnoxia, 'días', r.ano.diasAnoxia === 0 ? 'ok' : 'alerta', 0],
-        ['Hábitat de la trucha (volumen con OD ≥ 5 mg/L)', 100 * o.habitat, '%', o.habitat >= 0.7 ? 'ok' : 'aviso', 0],
+        [`Hábitat del pez de las jaulas (volumen con OD ≥ ${fmt(r.cultivo.ODmin, 0)} mg/L)`, 100 * o.habitat, '%', o.habitat >= 0.7 ? 'ok' : 'aviso', 0],
       ],
       ecuacion: [
         ecu.tipo('Ecuación lineal: el oxígeno del fondo'),
@@ -281,11 +288,64 @@ const PINTORES = {
       ].join(''),
       graficas: [
         { xTitulo: 'Días desde el último mezclado', yTitulo: 'Oxígeno del fondo (mg/L)', formatoX: (x) => fmt(x, 0), formatoY: (y) => fmt(y, 0),
-          series: [serieLinea('OD(t) = OD₀ − (AHOD/h_h)·t', linea, c.agua), serieGuia('Trucha (5 mg/L)', { x: 0, y: 5 }, { x: 365, y: 5 }, c.aviso || c.ocre), serieGuia('Anoxia (2 mg/L)', { x: 0, y: 2 }, { x: 365, y: 2 }, c.alerta), seriePuntos('Ahora', [{ x: o.diasDesdeMezcla, y: o.ODh }], c.ocre)],
+          series: [serieLinea('OD(t) = OD₀ − (AHOD/h_h)·t', linea, c.agua), serieGuia(`${r.cultivo.nombre.split(' (')[0]} (${fmt(r.cultivo.ODmin, 0)} mg/L)`, { x: 0, y: r.cultivo.ODmin }, { x: 365, y: r.cultivo.ODmin }, c.aviso || c.ocre), serieGuia('Anoxia (2 mg/L)', { x: 0, y: 2 }, { x: 365, y: 2 }, c.alerta), seriePuntos('Ahora', [{ x: o.diasDesdeMezcla, y: o.ODh }], c.ocre)],
           limites: { x: { min: 0, max: 365 }, y: { min: 0, max: Math.ceil(o.ODsatFondo + 1) } }, pie: 'Recta de pendiente −AHOD/h_h: con más algas la recta baja más rápido.' },
         { xTitulo: 'Mes', yTitulo: 'Oxígeno mínimo del fondo (mg/L)', formatoX: fmtMes, formatoY: (y) => fmt(y, 0), marcasX: MARCAS_MES,
           series: [serieLinea('Mínimo de cada mes', r.ano.meses.map((m, k) => ({ x: k + 1, y: m.ODmin })), c.agua), serieGuia('Anoxia (2 mg/L)', { x: 1, y: 2 }, { x: 12, y: 2 }, c.alerta)],
           limites: { x: { min: 1, max: 12 }, y: { min: 0, max: Math.ceil(o.ODsatFondo + 1) } }, pie: 'El fondo pierde oxígeno de noviembre a abril (estratificado) y se recupera con la mezcla de mitad de año.' },
+      ],
+    };
+  },
+
+  peces({ p, r, c }) {
+    const cu = r.cultivo;
+    const todas = Object.values(cu.todas);
+    const colores = { trucha: c.alerta, capitan: c.ocre, guapucha: c.ok };
+    const Tmeses = r.ano.meses.map((m) => m.Te);
+    const Tlo = Math.min(...Tmeses), Thi = Math.max(...Tmeses);
+    const nombreCorto = (e) => e.nombre.split(' (')[0];
+    const diasMax = Math.min(720, Math.max(...todas.map((e) => (Number.isFinite(e.dias) ? e.dias : 0))) * 1.1 + 30);
+    return {
+      metricas: [
+        [`<b>${cu.nombre}</b> · <i>${cu.cientifico}</i>`, '', ''],
+        ['Origen', cu.origen, ''],
+        ['Temperatura del agua de las jaulas hoy', r.tr.Te, '°C', '', 2, 'Epilimnion.'],
+        ['Crecimiento frente al óptimo hoy', 100 * cu.fHoy, '%', cu.fHoy >= 0.5 ? 'ok' : 'aviso', 0, `Óptimo de ${fmt(cu.Topt, 0)} °C; nada fuera de ${fmt(cu.Tmin, 0)}–${fmt(cu.Tmax, 0)} °C.`],
+        ['Crecimiento en el mes menos favorable', 100 * cu.fMin, '%', cu.fMin >= 0.5 ? 'ok' : 'aviso', 0],
+        ['Tasa de crecimiento media del año', 100 * cu.G, '% al día', '', 2, 'G = G_máx·f(T) promedio.'],
+        ['Peso de siembra → peso de cosecha', `${fmt(cu.W0, cu.W0 < 1 ? 1 : 0)} → ${fmt(cu.Wf, 0)} g`, ''],
+        ['Días a la cosecha', cu.dias, 'días', '', 0, 't = ln(W_f/W₀)/G.'],
+        ['Conversión de alimento (FCA)', cu.FCA, 'kg/kg', '', 2],
+        ['Alimento del año', cu.alimento, 't', '', 0, 'FCA × producción.'],
+        ['Fósforo que queda en el lago por tonelada', cu.LP, 'kg/t', '', 2, 'L_P = 1000·(FCA·p_a − p_p).'],
+        ['Fósforo de las jaulas al lago', r.nu.fuentes.jaulas, 'kg/año', '', 0],
+        ['Producción que aguanta el lago', cu.prodMax, 't/año', p.peces <= cu.prodMax ? 'ok' : 'alerta', 0, 'Hasta llegar a la carga admisible de Vollenweider con las demás fuentes.'],
+        ['Oxígeno mínimo de la especie', cu.ODmin, 'mg/L', '', 0],
+        ['Hábitat con ese oxígeno', 100 * r.oxigeno.habitat, '%', r.oxigeno.habitat >= 0.7 ? 'ok' : 'aviso', 0],
+      ],
+      tablas: tablaHTML('Las especies para las jaulas, en este lago', ['Especie', 'Origen', 'Óptimo (°C)', 'Rango (°C)', 'OD mín. (mg/L)', 'FCA', 'kg P/t', 'Días a la cosecha', 'Producción máxima (t/año)', 'Datos'],
+        todas.map((e) => [{ v: nombreCorto(e), clase: e.clave === cu.clave ? 'total' : '' }, e.origen.split(':')[0].split(';')[0], fmt(e.Topt, 0), `${fmt(e.Tmin, 0)}–${fmt(e.Tmax, 0)}`, fmt(e.ODmin, 0), fmt(e.FCA, 1), fmt(e.LP, 1), miles(e.dias), { v: miles(e.prodMax), clase: p.peces > e.prodMax ? 'mal' : '' }, e.datos]),
+        { numericas: [2, 4, 5, 6, 7, 8], nota: `Producción de ${miles(p.peces)} t/año con alimento de ${fmt(p.pAlimento, 2)} % de fósforo. «Datos»: medidos en Tota (trucha), ensayos de cultivo (capitán, AUNAP y UDCA) o supuestos de referencia (guapucha).` }),
+      ecuacion: [
+        ecu.tipo('Por tramos y cuadrática: el crecimiento según la temperatura'),
+        ecu.formula(`${i('f')}(${i('T')}) = 1 − ((${sub('T', 'opt')} − ${i('T')})/(${sub('T', 'opt')} − ${sub('T', 'mín')}))² si ${i('T')} ≤ ${sub('T', 'opt')};  1 − ((${i('T')} − ${sub('T', 'opt')})/(${sub('T', 'máx')} − ${sub('T', 'opt')}))² si ${i('T')} > ${sub('T', 'opt')};  0 fuera del rango`),
+        ecu.sust(`${i('f')}(${fmt(r.tr.Te, 2)}) = 1 − ((${fmt(cu.Topt, 0)} − ${fmt(r.tr.Te, 2)})/(${fmt(cu.Topt, 0)} − ${fmt(r.tr.Te <= cu.Topt ? cu.Tmin : cu.Tmax, 0)}))² = ${fmt(cu.fHoy, 3)}`),
+        ecu.tipo('Exponencial y logarítmica: el pez crece y se cosecha'),
+        ecu.formula(`${i('W')}(${i('t')}) = ${sub('W', '0')}·e<sup>${i('G')}·${i('t')}</sup>,  ${i('t')} = ln(${sub('W', 'f')}/${sub('W', '0')})/${i('G')}`),
+        ecu.sust(`${i('t')} = ln(${fmt(cu.Wf, 0)}/${fmt(cu.W0, cu.W0 < 1 ? 1 : 0)})/${fmt(cu.G, 5)} = ${miles(cu.dias)} días`),
+        ecu.tipo('Lineal: el fósforo del alimento que no se vuelve pescado'),
+        ecu.formula(`${sub('L', 'P')} = 1000·(FCA·${sub('p', 'a')} − ${sub('p', 'p')}) = 1000 × (${fmt(cu.FCA, 2)} × ${fmt(p.pAlimento / 100, 4)} − ${fmt(cu.pPez, 4)}) = ${fmt(cu.LP, 2)} kg/t`),
+        ecu.tipo('Racional: la producción que aguanta el lago'),
+        ecu.formula(`${sub('T', 'máx')} = (${sub('L', 'c')} − ${sub('L', 'otras')})/${sub('L', 'P')} = (${miles(r.nu.Lc)} − ${miles(r.nu.carga - r.nu.fuentes.jaulas)})/${fmt(cu.LP, 2)} = ${miles(cu.prodMax)} t/año`),
+      ].join(''),
+      graficas: [
+        { xTitulo: 'Temperatura del agua (°C)', yTitulo: 'Crecimiento frente al óptimo', formatoX: (x) => fmt(x, 0), formatoY: (y) => `${fmt(100 * y, 0)} %`,
+          series: [...todas.map((e) => serieLinea(nombreCorto(e), muestrear((T) => M.factorTermico(T, e.Topt, e.Tmin, e.Tmax), 2, 26, 241), colores[e.clave], { ancho: e.clave === cu.clave ? 3 : 1.5, punteada: e.clave !== cu.clave })),
+            serieGuia('Agua de las jaulas en el año (mín.)', { x: Tlo, y: 0 }, { x: Tlo, y: 1 }, c.agua, { punteada: true, ancho: 1 }), serieGuia('(máx.)', { x: Thi, y: 0 }, { x: Thi, y: 1 }, c.agua, { punteada: true, ancho: 1 }), seriePuntos('Hoy', [{ x: r.tr.Te, y: cu.fHoy }], c.tinta)],
+          limites: { x: { min: 2, max: 26 }, y: { min: 0, max: 1.05 } }, pie: 'Parábolas por tramos: cada especie crece más cerca de su óptimo. Las líneas azules marcan la temperatura del epilimnion en el año.' },
+        { xTitulo: 'Días desde la siembra', yTitulo: 'Peso / peso de cosecha', formatoX: (x) => fmt(x, 0), formatoY: (y) => `${fmt(100 * y, 0)} %`,
+          series: [...todas.map((e) => serieLinea(`${nombreCorto(e)}: ${fmt(e.W0, e.W0 < 1 ? 1 : 0)} → ${fmt(e.Wf, 0)} g en ${miles(e.dias)} días`, muestrear((t) => M.pesoPez(e.W0, e.G, t) / e.Wf, 0, Math.min(diasMax, Number.isFinite(e.dias) ? e.dias : diasMax), 160), colores[e.clave], { ancho: e.clave === cu.clave ? 3 : 1.5, punteada: e.clave !== cu.clave })), serieGuia('Cosecha', { x: 0, y: 1 }, { x: diasMax, y: 1 }, c.tinta2), seriePuntos('Cosecha de cada especie', todas.filter((e) => Number.isFinite(e.dias) && e.dias <= diasMax).map((e) => ({ x: e.dias, y: 1 })), c.tinta)],
+          limites: { x: { min: 0, max: diasMax }, y: { min: 0, max: 1.05 } }, pie: 'Crecimiento exponencial en el agua de este lago: la curva corta la línea de cosecha a los ln(W_f/W₀)/G días.' },
       ],
     };
   },
@@ -313,7 +373,7 @@ const PINTORES = {
       tablas: tablaHTML('Fuentes de fósforo del lago', ['Fuente', 'Carga', 'Parte'], filas, { numericas: [1, 2], nota: 'Coeficientes de exportación de referencia (tabla del modelo). La carga interna aparece cuando el fondo pasa días sin oxígeno.' }),
       ecuacion: [
         ecu.tipo('Lineal: la carga es la suma de las fuentes'),
-        ecu.formula(`${i('L')} = 8·${sub('A', 'c')} + 1.0·${sub('A', 'cebolla')} + 10·${i('T')} + 0.6·hab·(1 − ${i('r')}) + ${sub('L', 'interna')}`),
+        ecu.formula(`${i('L')} = 8·${sub('A', 'c')} + 1.0·${sub('A', 'cebolla')} + ${sub('L', 'P')}·${i('T')} + 0.6·hab·(1 − ${i('r')}) + ${sub('L', 'interna')},  ${sub('L', 'P')} = ${fmt(r.cultivo.LP, 2)} kg/t (${r.cultivo.nombre.split(' (')[0].toLowerCase()})`),
         ecu.tipo('Racional con raíz: Vollenweider'),
         ecu.formula(`${i('P')} = ${sub('P', 'in')}/(1 + √τ),  ${sub('L', 'c')} = ${sub('P', 'c')}·${i('Q')}·(1 + √τ)`),
         ecu.sust(`${i('P')} = ${fmt(nu.Pin, 1)}/(1 + √${fmt(nu.tau, 1)}) = ${fmt(nu.P, 1)} µg/L`),
@@ -373,6 +433,6 @@ iniciarSimulador({
     { id: 'general', nombre: 'Lago', titulo: 'El lago en su valle' },
     { id: 'corte', nombre: 'Corte', titulo: 'Corte del lago: capas de temperatura y oxígeno' },
     { id: 'cuenca', nombre: 'Cuenca', titulo: 'La cuenca con la cebolla y los pueblos' },
-    { id: 'jaulas', nombre: 'Jaulas', titulo: 'Las jaulas de trucha y la boya de medición' },
+    { id: 'jaulas', nombre: 'Jaulas', titulo: 'Las jaulas de peces y la boya de medición' },
   ],
 });

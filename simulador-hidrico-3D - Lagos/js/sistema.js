@@ -17,7 +17,6 @@ export const SITIO = {
   dMaxViento: 213,       // día del año con más viento (agosto)
   espesorTermoclina: 1.5,
   ODlimite: 2,           // mg/L: por debajo, anoxia
-  ODtrucha: 5,           // mg/L que necesita la trucha
   liberacionP: 2,        // mg de fósforo por m² y día que suelta el fondo sin oxígeno
   Pcritico: 20,          // µg/L: límite del estado mesotrófico de referencia
 };
@@ -31,13 +30,43 @@ export const CLIMAS = {
   nina: { nombre: 'La Niña (año lluvioso y frío)', fLluvia: 1.4, dT: -0.4 },
 };
 
-/** Fuentes de fósforo: coeficientes de exportación de referencia. */
+/** Fuentes de fósforo: coeficientes de exportación de referencia (el de las jaulas sale de la especie). */
 export const FUENTES = {
   cuenca: { nombre: 'Cuenca natural (bosque y páramo)', coef: 8, unidad: 'kg/km²·año' },
   cebolla: { nombre: 'Cultivos de cebolla con gallinaza', coef: 1.0, unidad: 'kg/ha·año' },
-  truchas: { nombre: 'Jaulas de trucha', coef: 10, unidad: 'kg/t' },
+  jaulas: { nombre: 'Jaulas de peces', coef: NaN, unidad: 'kg/t' },
   aguas: { nombre: 'Aguas residuales de los pueblos', coef: 0.6, unidad: 'kg/hab·año' },
 };
+
+/**
+ * Especies para cultivar en jaulas. La trucha arcoíris es la referencia (exótica, de Norteamérica:
+ * llegó al lago de Tota en 1939 y se cría en jaulas desde 2005; conversión de 1.4 y 7.3 kg de
+ * fósforo por tonelada, Torres-Barrera y Grandas-Rincón, 2017). El capitán de la sabana y la
+ * guapucha son nativos del altiplano Cundiboyacense (cuenca del Magdalena); en Tota, que desagua al
+ * Orinoco, llegaron en el siglo XX. Capitán: conversión de 2.0 a 2.9 y crecimiento de 0.7 a 0.9 %
+ * al día de los juveniles en agua fría (AUNAP y UDCA, 2019), larvas criadas a 13–16 °C
+ * (Moncaleano-Gómez y Prieto-Mojica, 2020), adultos de 200 a 500 g, oxígeno mínimo de 6 mg/L y
+ * vulnerable en el Libro rojo (Vargas Castillo). Guapucha: pez pequeño (hasta 8 cm) que come
+ * insectos y microcrustáceos (Roa-Fuentes et al., 2013); no hay datos publicados de su cultivo, así
+ * que sus valores son supuestos de referencia.
+ */
+export const ESPECIES = {
+  trucha: {
+    nombre: 'Trucha arcoíris (exótica)', cientifico: 'Oncorhynchus mykiss', origen: 'Exótica: de Norteamérica, llegó a Tota en 1939',
+    Topt: 15, Tmin: 4, Tmax: 22, ODmin: 5, FCA: 1.4, pPez: 0.0043, Gmax: 0.020, W0: 5, Wf: 300, datos: 'medidos',
+  },
+  capitan: {
+    nombre: 'Capitán de la sabana (nativo)', cientifico: 'Eremophilus mutisii', origen: 'Nativo del altiplano Cundiboyacense; vulnerable',
+    Topt: 18, Tmin: 8, Tmax: 24, ODmin: 6, FCA: 2.4, pPez: 0.0045, Gmax: 0.011, W0: 5, Wf: 200, datos: 'ensayos',
+  },
+  guapucha: {
+    nombre: 'Guapucha (nativa)', cientifico: 'Grundulus bogotensis', origen: 'Nativa del altiplano Cundiboyacense; preocupación menor',
+    Topt: 16, Tmin: 6, Tmax: 23, ODmin: 4, FCA: 1.6, pPez: 0.0050, Gmax: 0.020, W0: 0.2, Wf: 6, datos: 'supuestos',
+  },
+};
+export const especie = (p) => ESPECIES[p.especie] ?? ESPECIES.trucha;
+/** Fósforo por tonelada de la especie elegida, con el fósforo del alimento del simulador. */
+export const fosforoEspecie = (p, e = especie(p)) => M.fosforoPorTonelada(e.FCA, p.pAlimento / 100, e.pPez);
 
 export const PARAMETROS = {
   escenario: 'base',
@@ -71,7 +100,9 @@ export const PARAMETROS = {
   amplitudViento: 2,         // m/s
   // Nutrientes
   areaCebolla: 1200,         // ha
-  truchas: 100,              // t/año
+  especie: 'trucha',         // especie que se cría en las jaulas
+  peces: 100,                // t/año de pescado producido en jaulas
+  pAlimento: 0.83,           // % de fósforo del alimento
   habitantes: 8000,
   remocion: 50,              // % del fósforo que quitan las plantas de tratamiento
 };
@@ -81,7 +112,9 @@ export const ESCENARIOS = {
   nino: { nombre: 'Sequía de El Niño', cambios: { clima: 'nino' } },
   nina: { nombre: 'Lluvias de La Niña', cambios: { clima: 'nina' } },
   cebolla: { nombre: 'Más cebolla con gallinaza en la cuenca', cambios: { areaCebolla: 3500 } },
-  truchas: { nombre: 'Más jaulas de trucha', cambios: { truchas: 450 } },
+  truchas: { nombre: 'Más jaulas de trucha', cambios: { peces: 450 } },
+  capitan: { nombre: 'Jaulas de capitán de la sabana (pez nativo)', cambios: { especie: 'capitan' } },
+  guapucha: { nombre: 'Jaulas de guapucha (pez nativo)', cambios: { especie: 'guapucha' } },
   aguas: { nombre: 'Aguas residuales sin tratar', cambios: { remocion: 0, habitantes: 15000 } },
   calentamiento: { nombre: 'Calentamiento de 3 °C y menos viento', cambios: { calentamiento: 3, viento: 4 } },
   extraccion: { nombre: 'Más agua para las ciudades', cambios: { extraccion: 2.2 } },
@@ -145,7 +178,7 @@ export function nutrientes(p, diasAnoxia = 0) {
   const fuentes = {
     cuenca: p.areaCuenca * FUENTES.cuenca.coef,
     cebolla: p.areaCebolla * FUENTES.cebolla.coef,
-    truchas: p.truchas * FUENTES.truchas.coef,
+    jaulas: p.peces * fosforoEspecie(p),
     aguas: p.habitantes * FUENTES.aguas.coef * (1 - p.remocion / 100),
     externo: (p.aporteExterno * p.fosforoExterno * M.SEG_ANO) / 1e6,
   };
@@ -245,6 +278,33 @@ export function anoMensual(p) {
   return valor;
 }
 
+/**
+ * El cultivo de peces en las jaulas (en el epilimnion): crecimiento según la temperatura del agua,
+ * días a la cosecha, alimento, fósforo y la producción que aguanta el lago, para la especie
+ * elegida y, para comparar, para todas.
+ */
+export function cultivoPeces(p, ano, nu, tr) {
+  const otras = nu.carga - nu.fuentes.jaulas;                       // carga de las demás fuentes
+  const ficha = (clave) => {
+    const e = ESPECIES[clave];
+    const fMes = ano.meses.map((m) => M.factorTermico(m.Te, e.Topt, e.Tmin, e.Tmax));
+    const fMedio = fMes.reduce((a, b) => a + b, 0) / 12;
+    const fMin = Math.min(...fMes);
+    const G = e.Gmax * fMedio;
+    const LP = fosforoEspecie(p, e);
+    return {
+      clave, ...e, fMes, fMedio, fMin, G, LP, dias: M.diasCosecha(e.W0, e.Wf, G),
+      alimento: e.FCA * p.peces,
+      carga: p.peces * LP, prodMax: M.produccionMaxima(nu.Lc - otras, LP),
+      habitatMinOD: e.ODmin,
+    };
+  };
+  const todas = Object.fromEntries(Object.keys(ESPECIES).map((k) => [k, ficha(k)]));
+  const sel = todas[p.especie] ?? todas.trucha;
+  const fHoy = M.factorTermico(tr.Te, sel.Topt, sel.Tmin, sel.Tmax);
+  return { ...sel, todas, fHoy, Ghoy: sel.Gmax * fHoy, alimento: sel.FCA * p.peces };
+}
+
 export function calcular(p, sim) {
   const t = sim.t ?? 0;
   const d = diaDelAno(t);
@@ -266,14 +326,17 @@ export function calcular(p, sim) {
   const Dh = M.inclinacionTermoclina(tr.tau, mo.L, tr.gp, mo.he);
   const Ts = M.seicheSuperficial(mo.L, mo.zmed);
   const Ti = M.seicheInterna(mo.L, tr.gp, mo.he, mo.hh);
-  // Hábitat de la trucha: epilimnion siempre; hipolimnion si tiene oxígeno
-  const habitat = (mo.Vepi + (sim.ODh >= SITIO.ODtrucha ? mo.Vhipo : 0)) / mo.V;
+  // Hábitat del pez de las jaulas: epilimnion siempre; hipolimnion si tiene el oxígeno que necesita
+  const esp = especie(p);
+  const habitat = (mo.Vepi + (sim.ODh >= esp.ODmin ? mo.Vhipo : 0)) / mo.V;
+  const cultivo = cultivoPeces(p, ano, nu, tr);
   const surgenciaAnoxica = (tr.mezcla || ventarron) && sim.ODh < SITIO.ODlimite + 1;
   const r = {
     t, d, hora, fecha, mo, bal, q, tr, ano, nu,
     nivel: { eta: sim.eta, A: mo.A0, dhdt: M.pendienteNivel(q.Qneto, mo.A0), Qeco: 0.3, tau: nu.tau },
     oxigeno: { ODsatSup, ODsatFondo, ODh: sim.ODh, diasAnoxiaRest, diasDesdeMezcla, habitat, surgenciaAnoxica, ventarron },
     viento: { Lsup, Dh, Ts, Ti },
+    cultivo,
   };
   r.revision = revisionCompleta(p, r);
   return r;
@@ -294,7 +357,9 @@ export function revisionCompleta(p, r) {
 
   revisar(oxi, 'Oxígeno del hipolimnion ≥ 2 mg/L (sin anoxia)', oxigeno.ODh >= SITIO.ODlimite, `${fmt(oxigeno.ODh, 2)} mg/L`, { corregir: 'Bajar la carga de fósforo: menos algas, menos materia que consume el oxígeno del fondo.' });
   revisar(oxi, 'Días sin oxígeno en el año = 0', ano.diasAnoxia === 0, `${ano.diasAnoxia} días`, { corregir: 'El fondo sin oxígeno suelta fósforo (carga interna) y empeora el lago.' });
-  revisar(oxi, 'Hábitat de la trucha ≥ 70 % del volumen', oxigeno.habitat >= 0.7, `${fmt(100 * oxigeno.habitat, 0)} %`, { nivelFalla: 'aviso', corregir: 'Con el hipolimnion bajo 5 mg/L la trucha solo vive en la capa de arriba.' });
+  const cu = r.cultivo;
+  revisar(oxi, `Hábitat del pez de las jaulas (${cu.nombre.split(' (')[0].toLowerCase()}) ≥ 70 % del volumen`, oxigeno.habitat >= 0.7, `${fmt(100 * oxigeno.habitat, 0)} % con OD ≥ ${fmt(cu.ODmin, 0)} mg/L`, { nivelFalla: 'aviso', corregir: `Con el hipolimnion bajo ${fmt(cu.ODmin, 0)} mg/L el pez solo vive en la capa de arriba.` });
+  revisar(nut, `El agua de las jaulas le sirve a la especie todo el año (crecimiento ≥ 50 % del óptimo)`, cu.fMin >= 0.5, `${fmt(100 * cu.fMin, 0)} % en el mes menos favorable (${cu.nombre.split(' (')[0].toLowerCase()}: óptimo de ${fmt(cu.Topt, 0)} °C)`, { nivelFalla: 'aviso', corregir: 'La temperatura del epilimnion queda lejos del óptimo de la especie: escoger una especie de agua más fría o más tibia.' });
 
   revisar(nut, 'Fósforo total ≤ 20 µg/L', nu.P <= SITIO.Pcritico, `${fmt(nu.P, 1)} µg/L`, { corregir: 'Tratar las aguas residuales y controlar la gallinaza de la cebolla.' });
   revisar(nut, 'Índice de Carlson < 50 (no eutrófico)', nu.tsi < 50, `${fmt(nu.tsi, 1)} (${nu.clase})`, { nivelFalla: nu.tsi < 60 ? 'aviso' : 'alerta', corregir: 'Bajar la carga de fósforo.' });

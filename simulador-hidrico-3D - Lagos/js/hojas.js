@@ -68,5 +68,38 @@ export function hojasExcel(p, r) {
     filas: r.ano.meses.map((m) => [m.mes, { v: m.lluvia, dec: 0 }, { v: m.Qcuenca, dec: 2 }, { v: m.Qevap, dec: 2 }, { v: m.Qdesague, dec: 2 }, { v: m.eta, dec: 3 }, { v: m.Te, dec: 2 }, { v: m.W, dec: 2 }, m.diasMezcla, { v: m.ODmin, dec: 2 }]),
     columnas: [10, 12, 14, 16, 14, 18, 14, 12, 12, 18],
   };
-  return [fosforo, fisica, ano];
+  const cu = r.cultivo;
+  const peces = {
+    nombre: 'Cultivo de peces',
+    descripcion: 'Factor térmico, crecimiento, días a la cosecha, fósforo por tonelada y producción que aguanta el lago para la especie elegida, con fórmulas de Excel.',
+    columnas: [60, 16, 14],
+    filas: [
+      [{ v: `Cultivo en jaulas: ${cu.nombre} (${cu.cientifico})`, estilo: 'titulo' }],
+      [{ v: 'Datos de entrada en azul; los resultados se recalculan con fórmulas.', estilo: 'nota' }],
+      [],
+      ['Temperatura media del agua de las jaulas en el año', e(r.ano.meses.reduce((a2, m) => a2 + m.Te, 0) / 12, 2), '°C'],
+      ['Temperatura óptima T_opt', e(cu.Topt, 1), '°C'],
+      ['Temperatura mínima T_mín', e(cu.Tmin, 1), '°C'],
+      ['Temperatura máxima T_máx', e(cu.Tmax, 1), '°C'],
+      ['Tasa de crecimiento en el óptimo G_máx', e(cu.Gmax, 4), '1/día'],
+      ['Peso de siembra W₀', e(cu.W0, 2), 'g'],
+      ['Peso de cosecha W_f', e(cu.Wf, 1), 'g'],
+      ['Conversión de alimento FCA', e(cu.FCA, 2), 'kg/kg'],
+      ['Fósforo del alimento p_a', e(p.pAlimento / 100, 4), 'kg/kg'],
+      ['Fósforo del pescado p_p', e(cu.pPez, 4), 'kg/kg'],
+      ['Producción', e(p.peces, 0), 't/año'],
+      ['Carga admisible del lago L_c', e(r.nu.Lc, 0), 'kg/año'],
+      ['Carga de las demás fuentes', e(r.nu.carga - r.nu.fuentes.jaulas, 0), 'kg/año'],
+      [],
+      ['Factor térmico con la temperatura media (parábola por tramos)', { f: 'IF(OR(B4<=B6,B4>=B7),0,IF(B4<=B5,1-((B5-B4)/(B5-B6))^2,1-((B4-B5)/(B7-B5))^2))', v: M.factorTermico(r.ano.meses.reduce((a2, m) => a2 + m.Te, 0) / 12, cu.Topt, cu.Tmin, cu.Tmax), dec: 4 }, ''],
+      ['Tasa de crecimiento G = G_máx·f(T)', { f: 'B8*B18', v: cu.Gmax * M.factorTermico(r.ano.meses.reduce((a2, m) => a2 + m.Te, 0) / 12, cu.Topt, cu.Tmin, cu.Tmax), dec: 5 }, '1/día'],
+      ['Días a la cosecha t = ln(W_f/W₀)/G', { f: 'LN(B10/B9)/B19', v: M.diasCosecha(cu.W0, cu.Wf, cu.Gmax * M.factorTermico(r.ano.meses.reduce((a2, m) => a2 + m.Te, 0) / 12, cu.Topt, cu.Tmin, cu.Tmax)), dec: 0 }, 'días'],
+      ['Fósforo por tonelada L_P = 1000·(FCA·p_a − p_p)', { f: '1000*(B11*B12-B13)', v: cu.LP, dec: 2 }, 'kg/t'],
+      ['Fósforo de las jaulas al lago', { f: 'B14*B21', v: p.peces * cu.LP, dec: 0 }, 'kg/año'],
+      ['Alimento del año', { f: 'B11*B14', v: cu.FCA * p.peces, dec: 0 }, 't'],
+      ['Producción que aguanta el lago (L_c − otras)/L_P', { f: 'MAX(0,B15-B16)/B21', v: cu.prodMax, dec: 0 }, 't/año'],
+      [{ v: 'Nota: el simulador promedia el factor térmico de los doce meses; aquí se usa la temperatura media del año, así que los días pueden diferir un poco.', estilo: 'nota' }],
+    ],
+  };
+  return [fosforo, fisica, ano, peces];
 }

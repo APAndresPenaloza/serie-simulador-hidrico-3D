@@ -1,7 +1,8 @@
 /**
  * nodo.js — El delta como nodo de la serie de simuladores hídricos 3D.
  * -----------------------------------------------------------------------
- * Recibe de la ciénaga el agua que sale por su boca (una pluma pequeña al oriente) y del océano
+ * Recibe de la ciénaga el agua que sale por su boca (una pluma pequeña al oriente) y el intercambio
+ * por los caños (lo que la ciénaga le toma al río menos lo que le devuelve), y del océano
  * el oleaje, la marea, el nivel medio y la salinidad del mar. Entrega a la costa y al océano el
  * caudal medio del año que el río lleva al mar, con su sedimento: la arena que alimenta las
  * playas y el lodo de la pluma.
@@ -24,16 +25,22 @@ export function salida(p, r) {
   };
 }
 
-export const textoEntrada = 'La ciénaga suma su pluma por la Boca de la Barra; el océano fija el oleaje, la marea, el nivel medio y la salinidad del mar.';
+export const textoEntrada = 'La ciénaga suma su pluma por la Boca de la Barra y, por los caños, le toma agua al río en la creciente y se la devuelve en el estiaje; el océano fija el oleaje, la marea, el nivel medio y la salinidad del mar.';
 export const entradas = [
   {
     origen: 'cienagas',
-    claves: ['Qcienaga'],
-    aplicar: (p, f) => ({
-      cambios: { Qcienaga: Math.max(0, f.salida.Q ?? S.PARAMETROS.Qcienaga) },
-      texto: `La ciénaga entrega ${(f.salida.Q ?? 0).toFixed(1)} m³/s al mar por la Boca de la Barra.`,
-    }),
-    ejemplo: { salida: { Q: 254, salinidad: 17, temperatura: 29 } },
+    claves: ['Qcienaga', 'Qcanos'],
+    aplicar: (p, f) => {
+      const cambios = { Qcienaga: Math.max(0, f.salida.Q ?? S.PARAMETROS.Qcienaga) };
+      let texto = `La ciénaga entrega ${(f.salida.Q ?? 0).toFixed(1)} m³/s al mar por la Boca de la Barra.`;
+      if (Number.isFinite(f.salida.Qtoma) || Number.isFinite(f.salida.Qretorno)) {
+        const toma = f.salida.Qtoma ?? 0, vuelve = f.salida.Qretorno ?? 0;
+        cambios.Qcanos = toma - vuelve;
+        texto += ` Por los caños le toma al río ${toma.toFixed(1)} m³/s y le devuelve ${vuelve.toFixed(1)} m³/s en el estiaje (neto ${cambios.Qcanos.toFixed(1)} m³/s menos en Bocas de Ceniza).`;
+      }
+      return { cambios, texto };
+    },
+    ejemplo: { salida: { Q: 254, salinidad: 17, temperatura: 29, Qtoma: 76, Qretorno: 2 } },
   },
   {
     origen: 'oceanos',

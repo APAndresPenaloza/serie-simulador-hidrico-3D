@@ -1,7 +1,7 @@
 /**
  * escena3d.js — El lago andino en 3D (Three.js).
  * Un lago alargado en un valle de alta montaña: la cuenca con sus quebradas, la cebolla en
- * franjas en las laderas, el pueblo de la orilla con su vertimiento, las jaulas de trucha,
+ * franjas en las laderas, el pueblo de la orilla con su vertimiento, las jaulas de peces,
  * la boya con la cadena de termómetros y el desagüe que forma el río. En la vista Corte el
  * frente del valle se recorta como una maqueta y se ven las capas del lago (epilimnion,
  * termoclina e hipolimnion) coloreadas por la temperatura y el oxígeno, con la termoclina
@@ -27,7 +27,7 @@ export class Escena extends EscenaBase {
     super(contenedor, opciones);
     this.cielo = 0xd0dfe6;
     this.niebla = [380, 900];
-    this.pestanaVista = { cuenca: 'cuenca', morfometria: 'corte', temperatura: 'corte', viento: 'general', oxigeno: 'corte', nutrientes: 'jaulas' };
+    this.pestanaVista = { cuenca: 'cuenca', morfometria: 'corte', temperatura: 'corte', viento: 'general', oxigeno: 'corte', peces: 'jaulas', nutrientes: 'jaulas' };
     this.a = 123; this.b = 57; this.zmax = 60; this.m = 0.8;
   }
 
@@ -47,7 +47,7 @@ export class Escena extends EscenaBase {
       ['cuenca', 'cuenca', 'Quebradas de la cuenca', 'secundaria'],
       ['cebolla', 'nutrientes', 'Cebolla con gallinaza'],
       ['pueblo', 'nutrientes', 'Pueblo de la orilla'],
-      ['jaulas', 'nutrientes', 'Jaulas de trucha'],
+      ['jaulas', 'peces', 'Jaulas de peces'],
       ['boya', 'temperatura', 'Boya con termómetros'],
       ['epilimnion', 'temperatura', 'Epilimnion'],
       ['termoclina', 'viento', 'Termoclina'],
@@ -157,9 +157,14 @@ export class Escena extends EscenaBase {
     this.grupoPueblo.add(this.mancha);
     this.indexar(this.grupoPueblo);
 
-    // Jaulas de trucha y boya
-    this.grupoJaulas = this.grupo('nutrientes');
+    // Jaulas de peces y boya
+    this.grupoJaulas = this.grupo('peces');
     this.jaulas = [];
+    // Peces dentro de las jaulas: el color y el tamaño cambian con la especie
+    this.matPez = new THREE.MeshStandardMaterial({ color: 0xc9a7a0, roughness: 0.5, metalness: 0.2, flatShading: true });
+    const geoPez = new THREE.SphereGeometry(0.42, 8, 6);
+    geoPez.scale(1.9, 0.6, 0.55);
+    this.peces = [];
     for (let k = 0; k < 16; k++) {
       const j = new THREE.Group();
       const aro = new THREE.Mesh(new THREE.TorusGeometry(2.6, 0.25, 6, 20), new THREE.MeshStandardMaterial({ color: 0xe0a33a }));
@@ -167,6 +172,12 @@ export class Escena extends EscenaBase {
       const red = new THREE.Mesh(new THREE.CylinderGeometry(2.5, 2.5, 3, 16, 1, true), new THREE.MeshStandardMaterial({ color: 0x334, transparent: true, opacity: 0.35, side: THREE.DoubleSide }));
       red.position.y = -1.5;
       j.add(aro, red);
+      for (let n = 0; n < 5; n++) {
+        const pez = new THREE.Mesh(geoPez, this.matPez);
+        pez.userData = { fase: (n / 5) * Math.PI * 2 + k, radio: 0.8 + 0.25 * (n % 3), prof: -0.18 - 0.12 * (n % 4) };
+        j.add(pez);
+        this.peces.push(pez);
+      }
       j.position.set(-62 + (k % 4) * 7, 0.15, 18 + Math.floor(k / 4) * 7);
       j.visible = false;
       this.grupoJaulas.add(j);
@@ -300,8 +311,16 @@ export class Escena extends EscenaBase {
     for (const f of this.flujosCuenca) { f.visible = this.vista !== 'corte'; f.velocidad = 4 + 6 * Math.sqrt(r.q.Qcuenca); }
     const nP = Math.min(this.parcelas.length, Math.round(p.areaCebolla / 250));
     this.parcelas.forEach((pp, k) => { pp.visible = k < nP; });
-    const nJ = Math.min(this.jaulas.length, Math.ceil(p.truchas / 40));
+    const nJ = Math.min(this.jaulas.length, Math.ceil(p.peces / 40));
     this.jaulas.forEach((j, k) => { j.visible = k < nJ; });
+    // Trucha: plateada con rosado; capitán: bagre pardo oscuro; guapucha: pequeña y plateada
+    const COLOR_PEZ = { trucha: 0xc9a7a0, capitan: 0x5a4a3a, guapucha: 0xd8dde0 };
+    const ESCALA_PEZ = { trucha: 1, capitan: 1.1, guapucha: 0.5 };
+    if (this.especiePeces !== p.especie) {
+      this.especiePeces = p.especie;
+      this.matPez.color.setHex(COLOR_PEZ[p.especie] ?? COLOR_PEZ.trucha);
+      for (const pez of this.peces) pez.scale.setScalar(ESCALA_PEZ[p.especie] ?? 1);
+    }
     const carga = p.habitantes * (1 - p.remocion / 100);
     const rad = Math.min(30, 2 + Math.sqrt(carga) / 6);
     this.mancha.scale.set(rad, rad, 1);
@@ -329,7 +348,7 @@ export class Escena extends EscenaBase {
     this.etiqueta('cuenca', `${fmt(r.q.Qcuenca, 2)} m³/s · ${fmt(p.areaCuenca, 0)} km²`, 'ok', [-40, this.altura(-40, -150) + 6, -150]);
     this.etiqueta('cebolla', `${miles(p.areaCebolla)} ha · ${miles(r.nu.fuentes.cebolla)} kg P/año`, r.nu.carga <= r.nu.Lc ? 'ok' : 'aviso', [Math.cos(-2.3) * this.a * 1.5, 22, Math.sin(-2.3) * this.b * 1.9]);
     this.etiqueta('pueblo', `${miles(p.habitantes)} hab. · tratamiento ${fmt(p.remocion, 0)} %`, p.remocion >= 50 ? 'ok' : 'aviso', [-78, this.altura(-78, 62) + 8, 62]);
-    this.etiqueta('jaulas', `${miles(p.truchas)} t/año · ${miles(r.nu.fuentes.truchas)} kg P/año`, r.nu.P <= 20 ? 'ok' : 'aviso', [-52, 4, 18]);
+    this.etiqueta('jaulas', `${r.cultivo.nombre.split(' (')[0]} · ${miles(p.peces)} t/año · ${miles(r.nu.fuentes.jaulas)} kg P/año`, r.nu.P <= 20 && p.peces <= r.cultivo.prodMax ? 'ok' : 'aviso', [-52, 4, 18]);
     this.etiqueta('boya', `superficie ${fmt(r.tr.Te, 1)} °C · fondo ${fmt(r.tr.Th, 1)} °C · W = ${fmt(Math.min(99, r.tr.W), 2)}`, r.tr.mezcla ? 'ok' : 'ok', [5, 7.5, 4]);
     this.etiqueta('epilimnion', `${fmt(r.tr.Te, 2)} °C · algas ${fmt(r.nu.Chl, 1)} µg/L`, 'ok', [this.a * 0.35, -r.mo.he * VS * 0.4, 0.5]);
     this.etiqueta('termoclina', r.tr.mezcla || r.oxigeno.ventarron ? 'mezclado por el viento' : `${fmt(r.mo.he, 0)} m · inclinada ${fmt(Math.min(r.mo.he, r.viento.Dh), 1)} m`, 'ok', [this.a * 0.35, -r.mo.he * VS - 1, 0.5]);
@@ -366,5 +385,11 @@ export class Escena extends EscenaBase {
     for (const f of this.flujosCuenca ?? []) f.paso(dt);
     for (const f of this.flechas ?? []) { f.position.x += dt * (this.vientoAhora ?? 4) * 2; if (f.position.x > 120) f.position.x = -120; }
     for (const j of this.jaulas ?? []) if (j.visible) j.position.y = 0.15 + Math.sin(t * 1.3 + j.position.x) * 0.05;
+    for (const pez of this.peces ?? []) {
+      const u = pez.userData;
+      const a = u.fase + t * 0.7;
+      pez.position.set(Math.cos(a) * u.radio, u.prof, Math.sin(a) * u.radio);
+      pez.rotation.y = -a;
+    }
   }
 }
