@@ -59,6 +59,11 @@ matemático (forma general + sustitución), 1–2 gráficas con el punto actual.
   extraer.cjs dibuja la escena 3D a pedido (sin ciclo continuo): con SwiftShader y 2 núcleos el ciclo dejaba sin tiempo
   a las capturas. graficas.py usa una lista de familias (Liberation Serif → DejaVu Serif) para los superíndices ⁺ ⁻.
   Manual de ríos (PDF): imágenes JPEG recomprimidas (calidad 72, máx. 1 700 px de ancho): 25.5 MB → 16.6 MB.
+- 2026-11-13 · Portal con base de información: index.html lo arma _herramientas/portada/armar_portada.py (tarjetas con
+  accesos, tabla de informes y manuales en PDF y Word con su peso, galería de recorridos con video y GIF). PDF de los
+  documentos con _herramientas/documentos/pdf.py (ecuaciones como imágenes; LibreOffice sin módulo de fórmulas las
+  deja en blanco). Cada simulador tiene en el encabezado «Serie · Informe · Manual · Video · GIF» (proyecto.json →
+  "documentos"; en Ríos, a mano en su index.html). GIF/ y VIDEOS/ completos (8 y 8); VIDEOS/portadas/ para el portal.
 - Contrato v1 ampliado: MAGNITUDES_MAR.ascenso (mm/año, derivada del ascenso del océano) → deltas/costas ascensoMar.
 - RED: deltas también entrega a cienagas (caños). Prueba común revisa la red en los dos sentidos (salvo «sistema»).
 - Entradas que ya traen el clima se dividen por el factor climático del que recibe (ciénaga fRios/dH, costas fOla/fAporte).

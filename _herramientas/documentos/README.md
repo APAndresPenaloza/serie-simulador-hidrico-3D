@@ -45,11 +45,23 @@ Todo número de las tablas sale del simulador; el texto propio de cada proyecto 
 
    Salen `Informe_Simulador_Hidrico_3D_Lagunas.docx` y `Manual_Simulador_Hidrico_3D_Lagunas.docx`.
 
+5. PDF para la página de la serie (se publican junto al .docx, en la carpeta `documentos/` de cada proyecto):
+
+   ```
+   npm install mathjax@3        # una vez
+   python3 -I pdf.py            # todos los documentos de la serie (o: python3 -I pdf.py archivo.docx)
+   ```
+
+   `pdf.py` exporta con LibreOffice una copia del .docx en la que cada ecuación OMML se cambia por su
+   imagen (pandoc → LaTeX → MathJax), porque LibreOffice sin el módulo de fórmulas las deja en blanco, y
+   aclara las imágenes con transparencia (marca de agua de la portada del informe de Ríos). Después,
+   `python3 _herramientas/portada/armar_portada.py` (desde la raíz) actualiza los enlaces y pesos de la portada.
+
 ## Revisión
 
 - Convertir a PDF (`soffice --headless --convert-to pdf`) y mirar todas las páginas (`pdftoppm -r 40`).
-- LibreOffice no dibuja las ecuaciones OMML en línea (tampoco las del documento original); Word sí. Para
-  comprobarlas: `pandoc Informe.docx -t markdown | grep '\$'`.
+- LibreOffice sin el módulo de fórmulas no dibuja las ecuaciones OMML (tampoco las del documento original);
+  Word sí, y los PDF de `pdf.py` también. Para comprobarlas en el .docx: `pandoc Informe.docx -t markdown | grep '\$'`.
 - Que cada referencia esté citada y cada cita tenga referencia; DOIs verificados.
 - Que no queden `_` ni `*` sueltos en el texto (usar `x_{sub}` y `∗`).
 
@@ -62,4 +74,5 @@ Todo número de las tablas sale del simulador; el texto propio de cada proyecto 
 | `docx_serie.py` | Escritura de párrafos, títulos, tablas, figuras, cajas, índice y ecuaciones OMML (pandoc) |
 | `graficas.py` | Vuelve a dibujar las gráficas del simulador con matplotlib (serifas, paneles (a), (b)) |
 | `plantillas.py` | Crea `plantillas/informe.docx` y `plantillas/manual.docx` a partir de los documentos originales |
+| `pdf.py` | Exporta los .docx a PDF con las ecuaciones como imágenes (para la página de la serie) |
 | `contenido/<id>.py` | Texto propio de cada proyecto |

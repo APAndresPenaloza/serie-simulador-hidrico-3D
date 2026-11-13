@@ -1,3 +1,6 @@
 # Archivos generados por las herramientas de documentos
 __pycache__/
 _herramientas/documentos/salida/
+
+# Dependencias de las herramientas (MathJax para los PDF)
+node_modules/

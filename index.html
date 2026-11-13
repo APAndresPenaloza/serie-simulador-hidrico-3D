@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Simulador hídrico 3D · Serie</title>
-  <meta name="description" content="Serie de simuladores hídricos 3D: laguna, lago, río, ciénaga, delta, costa, océano y el sistema conectado del páramo al mar.">
+  <meta name="description" content="Serie de simuladores hídricos 3D: laguna, lago, río, ciénaga, delta, costa, océano y el sistema conectado del páramo al mar, con sus informes técnicos, manuales de uso y recorridos en video.">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 3C16 3 6 14.5 6 20.5a10 10 0 0 0 20 0C26 14.5 16 3 16 3z' fill='%231C86B8'/%3E%3C/svg%3E">
   <style>
     :root { --fondo: #E6ECEA; --panel: #F6F8F7; --tinta: #12303B; --tinta-2: #4B6670; --linea: #C6D2D1; --agua: #1C86B8; --ocre: #B4823F; --ok: #2F7D5B; }
@@ -12,25 +12,69 @@
       :root { --fondo: #0E2027; --panel: #132A33; --tinta: #E2EDEF; --tinta-2: #9BB5BC; --linea: #28454F; --agua: #49ADDA; --ocre: #D3A25E; --ok: #5BBE8E; }
     }
     * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
     body { margin: 0; background: var(--fondo); color: var(--tinta); font: 16px/1.55 "Segoe UI", system-ui, -apple-system, sans-serif; }
+    a { color: var(--agua); }
     header { padding: 40px 20px 24px; max-width: 1100px; margin: 0 auto; }
     header h1 { margin: 0 0 6px; font-size: 30px; display: flex; gap: 12px; align-items: center; }
     header h1 svg { width: 34px; height: 34px; fill: var(--agua); flex: none; }
     header p { margin: 0; color: var(--tinta-2); max-width: 75ch; }
+    nav.indice { display: flex; flex-wrap: wrap; gap: 6px 22px; margin-top: 16px; font-size: 15px; }
+    nav.indice a { font-weight: 650; text-decoration: none; }
+    nav.indice a:hover, nav.indice a:focus-visible { text-decoration: underline; }
     main { max-width: 1100px; margin: 0 auto; padding: 0 20px 48px; }
     .red { background: var(--panel); border: 1px solid var(--linea); border-radius: 10px; padding: 16px; margin: 8px 0 28px; }
     .red svg { width: 100%; height: auto; display: block; }
     .red text { font-size: 12px; fill: var(--tinta); font-family: inherit; }
     .red .t2 { font-size: 10.5px; fill: var(--tinta-2); }
-    h2 { font-size: 19px; margin: 28px 0 12px; }
-    .tarjetas { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
-    a.tarjeta { display: flex; flex-direction: column; gap: 6px; text-decoration: none; color: inherit; background: var(--panel); border: 1px solid var(--linea); border-radius: 10px; padding: 16px; transition: border-color .15s, transform .15s; }
-    a.tarjeta:hover, a.tarjeta:focus-visible { border-color: var(--agua); transform: translateY(-2px); outline: none; }
+    h2 { font-size: 19px; margin: 36px 0 10px; scroll-margin-top: 16px; }
+    .intro { margin: 0 0 16px; color: var(--tinta-2); max-width: 80ch; }
+    .intro b { color: var(--tinta); }
+    .tarjetas { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(290px, 100%), 1fr)); gap: 14px; }
+    .tarjeta { display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--linea); border-radius: 10px; transition: border-color .15s, transform .15s; }
+    .tarjeta:hover, .tarjeta:focus-within { border-color: var(--agua); transform: translateY(-2px); }
+    .tarjeta a.abrir { flex: 1; display: flex; flex-direction: column; gap: 6px; padding: 16px 16px 12px; color: inherit; text-decoration: none; border-radius: 10px 10px 0 0; }
+    .tarjeta a.abrir:focus-visible { outline: 2px solid var(--agua); outline-offset: -2px; }
     .tarjeta .n { font-size: 12px; color: var(--agua); font-weight: 650; letter-spacing: .04em; text-transform: uppercase; }
     .tarjeta h3 { margin: 0; font-size: 17px; }
     .tarjeta p { margin: 0; font-size: 14px; color: var(--tinta-2); }
+    .tarjeta .ir { margin-top: auto; padding-top: 6px; font-size: 13px; font-weight: 650; color: var(--agua); }
     .tarjeta.sistema { border-color: var(--agua); background: color-mix(in srgb, var(--agua) 8%, var(--panel)); }
-    .nota { font-size: 14px; color: var(--tinta-2); background: var(--panel); border-left: 3px solid var(--ocre); padding: 10px 14px; border-radius: 4px; margin-top: 28px; }
+    .accesos { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 10px 16px 14px; border-top: 1px solid var(--linea); }
+    .accesos a { font-size: 12.5px; font-weight: 650; text-decoration: none; padding: 3px 10px; border: 1px solid var(--linea); border-radius: 999px; background: var(--fondo); }
+    .accesos a:hover, .accesos a:focus-visible { border-color: var(--agua); outline: none; }
+    .tabla { overflow-x: auto; background: var(--panel); border: 1px solid var(--linea); border-radius: 10px; }
+    table.docs { width: 100%; min-width: 640px; border-collapse: collapse; font-size: 14px; }
+    table.docs th, table.docs td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--linea); white-space: nowrap; }
+    table.docs thead th { font-size: 12px; font-weight: 650; text-transform: uppercase; letter-spacing: .04em; color: var(--tinta-2); }
+    table.docs tbody tr:last-child th, table.docs tbody tr:last-child td { border-bottom: 0; }
+    table.docs tbody th { font-weight: 600; }
+    table.docs a { font-weight: 650; text-decoration: none; }
+    table.docs a:hover, table.docs a:focus-visible { text-decoration: underline; }
+    table.docs tbody th a { color: var(--tinta); }
+    .peso { color: var(--tinta-2); font-size: 12.5px; font-weight: 400; }
+    @media (max-width: 700px) {
+      .tabla { overflow: visible; }
+      table.docs { min-width: 0; }
+      table.docs thead { display: none; }
+      table.docs, table.docs tbody, table.docs tr, table.docs th, table.docs td { display: block; }
+      table.docs tr { padding: 10px 0; border-bottom: 1px solid var(--linea); }
+      table.docs tbody tr:last-child { border-bottom: 0; }
+      table.docs th, table.docs td { border: 0; padding: 3px 14px; white-space: normal; }
+      table.docs tbody th { font-size: 15px; padding-bottom: 6px; }
+      table.docs td::before { content: attr(data-titulo); display: block; font-size: 11.5px; font-weight: 650; letter-spacing: .04em; text-transform: uppercase; color: var(--tinta-2); }
+    }
+    .videos { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(330px, 100%), 1fr)); gap: 16px; }
+    .videos figure { margin: 0; background: var(--panel); border: 1px solid var(--linea); border-radius: 10px; overflow: hidden; scroll-margin-top: 16px; }
+    .videos figure:target { border-color: var(--agua); box-shadow: 0 0 0 2px var(--agua); }
+    .videos video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; background: #0b3550; }
+    .videos figcaption { padding: 10px 14px 12px; font-size: 14px; }
+    .videos figcaption b { display: block; margin-bottom: 2px; }
+    .videos figcaption a { font-weight: 650; text-decoration: none; }
+    .videos figcaption a:hover, .videos figcaption a:focus-visible { text-decoration: underline; }
+    .videos .sep { color: var(--tinta-2); }
+    .nota { font-size: 14px; color: var(--tinta-2); background: var(--panel); border-left: 3px solid var(--ocre); padding: 10px 14px; border-radius: 4px; margin-top: 18px; max-width: 80ch; }
     code { font-size: 13px; background: var(--fondo); padding: 1px 5px; border-radius: 3px; }
     footer { max-width: 1100px; margin: 0 auto; padding: 0 20px 32px; font-size: 13px; color: var(--tinta-2); }
   </style>
@@ -39,6 +83,11 @@
   <header>
     <h1><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3C16 3 6 14.5 6 20.5a10 10 0 0 0 20 0C26 14.5 16 3 16 3z"/></svg>Simulador hídrico 3D</h1>
     <p>Serie de simuladores web en 3D para estudiar el agua de Colombia con álgebra y geometría analítica, del páramo al océano. Cada simulador es autónomo y entrega a sus vecinos lo que sale de él; el sistema conectado los une a todos.</p>
+    <nav class="indice" aria-label="Secciones de la página">
+      <a href="#simuladores">Los simuladores</a>
+      <a href="#documentos">Base de información</a>
+      <a href="#recorridos">Recorridos en video</a>
+    </nav>
   </header>
   <main>
     <div class="red" role="img" aria-label="Red de la serie: laguna, lago, río, ciénaga, delta, playa y océano">
@@ -61,18 +110,96 @@
       </svg>
     </div>
 
-    <h2>Los simuladores</h2>
+    <h2 id="simuladores">Los simuladores</h2>
     <div class="tarjetas">
-      <a class="tarjeta" href="simulador-hidrico-3D%20-%20Lagunas/"><span class="n">1 · Lagunas</span><h3>Laguna de alta montaña</h3><p>Laguna glaciar del páramo: balance de agua, glaciar, regulación del páramo, calidad, sedimentos y amenazas.</p></a>
-      <a class="tarjeta" href="simulador-hidrico-3D%20-%20Lagos/"><span class="n">2 · Lagos</span><h3>Lago andino</h3><p>Lago profundo de alta montaña: estratificación, viento, oxígeno, nutrientes (Vollenweider y Carlson), nivel y cultivo en jaulas de trucha o de peces nativos (capitán de la sabana y guapucha).</p></a>
-      <a class="tarjeta" href="simulador-hidrico-3D%20-%20Rios%20exorreicos/"><span class="n">3 · Ríos exorreicos</span><h3>Río de la Sierra Nevada</h3><p>El proyecto de referencia: lluvia, río, represa, captación, bombeo, tuberías, red, riego, huella, acuífero y arroyo.</p></a>
-      <a class="tarjeta" href="simulador-hidrico-3D%20-%20Cienagas/"><span class="n">4 · Ciénagas</span><h3>Ciénaga Grande</h3><p>Laguna costera: caños con agua en los dos sentidos (el río la llena en la creciente y ella le devuelve agua en el estiaje), alisios, marea, salinidad, manglar, calidad del agua y sedimentos.</p></a>
-      <a class="tarjeta" href="simulador-hidrico-3D%20-%20Deltas/"><span class="n">5 · Deltas</span><h3>Delta del río grande</h3><p>Desembocadura: canales, cuña salina, pluma, avance del delta, oleaje y dragado del canal de acceso.</p></a>
-      <a class="tarjeta" href="simulador-hidrico-3D%20-%20Costas/"><span class="n">6 · Costas</span><h3>Playa del Caribe</h3><p>Playa de bahía: oleaje y rompiente, nivel del mar y remonte, perfil y regla de Bruun, arena y calidad del agua.</p></a>
-      <a class="tarjeta" href="simulador-hidrico-3D%20-%20Oceanos/"><span class="n">7 · Océanos</span><h3>Mar Caribe</h3><p>Mar abierto: olas, mareas, Ekman y afloramiento, bosque de niebla de la Serranía de Macuira, temperatura y coral, pluma, nivel del mar y acidificación.</p></a>
-      <a class="tarjeta sistema" href="simulador-hidrico-3D%20-%20Sistema%20conectado/"><span class="n">8 · Sistema conectado</span><h3>Del páramo al océano</h3><p>Une los siete modelos: composición de funciones, matriz de la red, lazo de la costa, trazadores, clima y horizonte.</p></a>
+      <article class="tarjeta">
+        <a class="abrir" href="simulador-hidrico-3D%20-%20Lagunas/"><span class="n">1 · Lagunas</span><h3>Laguna de alta montaña</h3><p>Laguna glaciar del páramo: balance de agua, glaciar, regulación del páramo, calidad, sedimentos y amenazas.</p><span class="ir">Abrir el simulador →</span></a>
+        <p class="accesos"><a href="simulador-hidrico-3D%20-%20Lagunas/documentos/Informe_Simulador_Hidrico_3D_Lagunas.pdf" target="_blank" rel="noopener">Informe</a><a href="simulador-hidrico-3D%20-%20Lagunas/documentos/Manual_Simulador_Hidrico_3D_Lagunas.pdf" target="_blank" rel="noopener">Manual</a><a href="#recorrido-1">Video</a><a href="GIF/01_Lagunas.gif" target="_blank" rel="noopener">GIF</a></p>
+      </article>
+      <article class="tarjeta">
+        <a class="abrir" href="simulador-hidrico-3D%20-%20Lagos/"><span class="n">2 · Lagos</span><h3>Lago andino</h3><p>Lago profundo de alta montaña: estratificación, viento, oxígeno, nutrientes (Vollenweider y Carlson), nivel y cultivo en jaulas de trucha o de peces nativos (capitán de la sabana y guapucha).</p><span class="ir">Abrir el simulador →</span></a>
+        <p class="accesos"><a href="simulador-hidrico-3D%20-%20Lagos/documentos/Informe_Simulador_Hidrico_3D_Lagos.pdf" target="_blank" rel="noopener">Informe</a><a href="simulador-hidrico-3D%20-%20Lagos/documentos/Manual_Simulador_Hidrico_3D_Lagos.pdf" target="_blank" rel="noopener">Manual</a><a href="#recorrido-2">Video</a><a href="GIF/02_Lagos.gif" target="_blank" rel="noopener">GIF</a></p>
+      </article>
+      <article class="tarjeta">
+        <a class="abrir" href="simulador-hidrico-3D%20-%20Rios%20exorreicos/"><span class="n">3 · Ríos exorreicos</span><h3>Río de la Sierra Nevada</h3><p>El proyecto de referencia: lluvia, río, represa, captación, bombeo, tuberías, red, riego, huella, acuífero y arroyo.</p><span class="ir">Abrir el simulador →</span></a>
+        <p class="accesos"><a href="simulador-hidrico-3D%20-%20Rios%20exorreicos/documentos/Informe_Simulador_Hidrico_3D_Rios_exorreicos.pdf" target="_blank" rel="noopener">Informe</a><a href="simulador-hidrico-3D%20-%20Rios%20exorreicos/Manual_Simulador_Hidrico_3D_Rios_exorreicos.pdf" target="_blank" rel="noopener">Manual</a><a href="#recorrido-3">Video</a><a href="GIF/03_Rios_exorreicos.gif" target="_blank" rel="noopener">GIF</a></p>
+      </article>
+      <article class="tarjeta">
+        <a class="abrir" href="simulador-hidrico-3D%20-%20Cienagas/"><span class="n">4 · Ciénagas</span><h3>Ciénaga Grande</h3><p>Laguna costera: caños con agua en los dos sentidos (el río la llena en la creciente y ella le devuelve agua en el estiaje), alisios, marea, salinidad, manglar, calidad del agua y sedimentos.</p><span class="ir">Abrir el simulador →</span></a>
+        <p class="accesos"><a href="simulador-hidrico-3D%20-%20Cienagas/documentos/Informe_Simulador_Hidrico_3D_Cienagas.pdf" target="_blank" rel="noopener">Informe</a><a href="simulador-hidrico-3D%20-%20Cienagas/documentos/Manual_Simulador_Hidrico_3D_Cienagas.pdf" target="_blank" rel="noopener">Manual</a><a href="#recorrido-4">Video</a><a href="GIF/04_Cienagas.gif" target="_blank" rel="noopener">GIF</a></p>
+      </article>
+      <article class="tarjeta">
+        <a class="abrir" href="simulador-hidrico-3D%20-%20Deltas/"><span class="n">5 · Deltas</span><h3>Delta del río grande</h3><p>Desembocadura: canales, cuña salina, pluma, avance del delta, oleaje y dragado del canal de acceso.</p><span class="ir">Abrir el simulador →</span></a>
+        <p class="accesos"><a href="simulador-hidrico-3D%20-%20Deltas/documentos/Informe_Simulador_Hidrico_3D_Deltas.pdf" target="_blank" rel="noopener">Informe</a><a href="simulador-hidrico-3D%20-%20Deltas/documentos/Manual_Simulador_Hidrico_3D_Deltas.pdf" target="_blank" rel="noopener">Manual</a><a href="#recorrido-5">Video</a><a href="GIF/05_Deltas.gif" target="_blank" rel="noopener">GIF</a></p>
+      </article>
+      <article class="tarjeta">
+        <a class="abrir" href="simulador-hidrico-3D%20-%20Costas/"><span class="n">6 · Costas</span><h3>Playa del Caribe</h3><p>Playa de bahía: oleaje y rompiente, nivel del mar y remonte, perfil y regla de Bruun, arena y calidad del agua.</p><span class="ir">Abrir el simulador →</span></a>
+        <p class="accesos"><a href="simulador-hidrico-3D%20-%20Costas/documentos/Informe_Simulador_Hidrico_3D_Costas.pdf" target="_blank" rel="noopener">Informe</a><a href="simulador-hidrico-3D%20-%20Costas/documentos/Manual_Simulador_Hidrico_3D_Costas.pdf" target="_blank" rel="noopener">Manual</a><a href="#recorrido-6">Video</a><a href="GIF/06_Costas.gif" target="_blank" rel="noopener">GIF</a></p>
+      </article>
+      <article class="tarjeta">
+        <a class="abrir" href="simulador-hidrico-3D%20-%20Oceanos/"><span class="n">7 · Océanos</span><h3>Mar Caribe</h3><p>Mar abierto: olas, mareas, Ekman y afloramiento, bosque de niebla de la Serranía de Macuira, temperatura y coral, pluma, nivel del mar y acidificación.</p><span class="ir">Abrir el simulador →</span></a>
+        <p class="accesos"><a href="simulador-hidrico-3D%20-%20Oceanos/documentos/Informe_Simulador_Hidrico_3D_Oceanos.pdf" target="_blank" rel="noopener">Informe</a><a href="simulador-hidrico-3D%20-%20Oceanos/documentos/Manual_Simulador_Hidrico_3D_Oceanos.pdf" target="_blank" rel="noopener">Manual</a><a href="#recorrido-7">Video</a><a href="GIF/07_Oceanos.gif" target="_blank" rel="noopener">GIF</a></p>
+      </article>
+      <article class="tarjeta sistema">
+        <a class="abrir" href="simulador-hidrico-3D%20-%20Sistema%20conectado/"><span class="n">8 · Sistema conectado</span><h3>Del páramo al océano</h3><p>Une los siete modelos: composición de funciones, matriz de la red, lazo de la costa, trazadores, clima y horizonte.</p><span class="ir">Abrir el simulador →</span></a>
+        <p class="accesos"><a href="simulador-hidrico-3D%20-%20Sistema%20conectado/documentos/Informe_Simulador_Hidrico_3D_Sistema_Conectado.pdf" target="_blank" rel="noopener">Informe</a><a href="simulador-hidrico-3D%20-%20Sistema%20conectado/documentos/Manual_Simulador_Hidrico_3D_Sistema_Conectado.pdf" target="_blank" rel="noopener">Manual</a><a href="#recorrido-8">Video</a><a href="GIF/08_Sistema_conectado.gif" target="_blank" rel="noopener">GIF</a></p>
+      </article>
     </div>
 
+    <h2 id="documentos">Base de información</h2>
+    <p class="intro">Cada simulador tiene dos documentos. El <b>informe técnico</b> explica el problema, el modelo matemático con sus ecuaciones, los supuestos, el escenario base y las referencias. El <b>manual de uso</b> enseña paso a paso a manejar el simulador: la escena 3D, cada pestaña con sus controles y resultados, los escenarios guiados, la descarga a Excel y la conexión con los demás simuladores. Los PDF se abren en el navegador y los archivos de Word se descargan para editarlos.</p>
+    <div class="tabla">
+      <table class="docs">
+        <thead><tr><th scope="col">Simulador</th><th scope="col">Informe técnico</th><th scope="col">Manual de uso</th><th scope="col">Recorrido</th></tr></thead>
+        <tbody>
+          <tr><th scope="row"><a href="simulador-hidrico-3D%20-%20Lagunas/">1 · Lagunas</a></th><td data-titulo="Informe técnico"><a href="simulador-hidrico-3D%20-%20Lagunas/documentos/Informe_Simulador_Hidrico_3D_Lagunas.pdf" target="_blank" rel="noopener">PDF</a> <span class="peso">1.4 MB</span> · <a href="simulador-hidrico-3D%20-%20Lagunas/documentos/Informe_Simulador_Hidrico_3D_Lagunas.docx">Word</a> <span class="peso">0.8 MB</span></td><td data-titulo="Manual de uso"><a href="simulador-hidrico-3D%20-%20Lagunas/documentos/Manual_Simulador_Hidrico_3D_Lagunas.pdf" target="_blank" rel="noopener">PDF</a> <span class="peso">5.3 MB</span> · <a href="simulador-hidrico-3D%20-%20Lagunas/documentos/Manual_Simulador_Hidrico_3D_Lagunas.docx">Word</a> <span class="peso">6.2 MB</span></td><td data-titulo="Recorrido"><a href="#recorrido-1">Video</a> <span class="peso">6.6 MB</span> · <a href="GIF/01_Lagunas.gif" target="_blank" rel="noopener">GIF</a> <span class="peso">18.2 MB</span></td></tr>
+          <tr><th scope="row"><a href="simulador-hidrico-3D%20-%20Lagos/">2 · Lagos</a></th><td data-titulo="Informe técnico"><a href="simulador-hidrico-3D%20-%20Lagos/documentos/Informe_Simulador_Hidrico_3D_Lagos.pdf" target="_blank" rel="noopener">PDF</a> <span class="peso">1.5 MB</span> · <a href="simulador-hidrico-3D%20-%20Lagos/documentos/Informe_Simulador_Hidrico_3D_Lagos.docx">Word</a> <span class="peso">0.9 MB</span></td><td data-titulo="Manual de uso"><a href="simulador-hidrico-3D%20-%20Lagos/documentos/Manual_Simulador_Hidrico_3D_Lagos.pdf" target="_blank" rel="noopener">PDF</a> <span class="peso">4.9 MB</span> · <a href="simulador-hidrico-3D%20-%20Lagos/documentos/Manual_Simulador_Hidrico_3D_Lagos.docx">Word</a> <span class="peso">5.8 MB</span></td><td data-titulo="Recorrido"><a href="#recorrido-2">Video</a> <span class="peso">4.9 MB</span> · <a href="GIF/02_Lagos.gif" target="_blank" rel="noopener">GIF</a> <span class="peso">11.7 MB</span></td></tr>
+          <tr><th scope="row"><a href="simulador-hidrico-3D%20-%20Rios%20exorreicos/">3 · Ríos exorreicos</a></th><td data-titulo="Informe técnico"><a href="simulador-hidrico-3D%20-%20Rios%20exorreicos/documentos/Informe_Simulador_Hidrico_3D_Rios_exorreicos.pdf" target="_blank" rel="noopener">PDF</a> <span class="peso">1.6 MB</span> · <a href="simulador-hidrico-3D%20-%20Rios%20exorreicos/documentos/Informe_Simulador_Hidrico_3D_Rios_exorreicos.docx">Word</a> <span class="peso">6.8 MB</span></td><td data-titulo="Manual de uso"><a href="simulador-hidrico-3D%20-%20Rios%20exorreicos/Manual_Simulador_Hidrico_3D_Rios_exorreicos.pdf" target="_blank" rel="noopener">PDF</a> <span class="peso">16.6 MB</span></td><td data-titulo="Recorrido"><a href="#recorrido-3">Video</a> <span class="peso">23.6 MB</span> · <a href="GIF/03_Rios_exorreicos.gif" target="_blank" rel="noopener">GIF</a> <span class="peso">23.9 MB</span></td></tr>
+          <tr><th scope="row"><a href="simulador-hidrico-3D%20-%20Cienagas/">4 · Ciénagas</a></th><td data-titulo="Informe técnico"><a href="simulador-hidrico-3D%20-%20Cienagas/documentos/Informe_Simulador_Hidrico_3D_Cienagas.pdf" target="_blank" rel="noopener">PDF</a> <span class="peso">1.6 MB</span> · <a href="simulador-hidrico-3D%20-%20Cienagas/documentos/Informe_Simulador_Hidrico_3D_Cienagas.docx">Word</a> <span class="peso">1.1 MB</span></td><td data-titulo="Manual de uso"><a href="simulador-hidrico-3D%20-%20Cienagas/documentos/Manual_Simulador_Hidrico_3D_Cienagas.pdf" target="_blank" rel="noopener">PDF</a> <span class="peso">5.4 MB</span> · <a href="simulador-hidrico-3D%20-%20Cienagas/documentos/Manual_Simulador_Hidrico_3D_Cienagas.docx">Word</a> <span class="peso">5.9 MB</span></td><td data-titulo="Recorrido"><a href="#recorrido-4">Video</a> <span class="peso">6.4 MB</span> · <a href="GIF/04_Cienagas.gif" target="_blank" rel="noopener">GIF</a> <span class="peso">13.9 MB</span></td></tr>
+          <tr><th scope="row"><a href="simulador-hidrico-3D%20-%20Deltas/">5 · Deltas</a></th><td data-titulo="Informe técnico"><a href="simulador-hidrico-3D%20-%20Deltas/documentos/Informe_Simulador_Hidrico_3D_Deltas.pdf" target="_blank" rel="noopener">PDF</a> <span class="peso">1.5 MB</span> · <a href="simulador-hidrico-3D%20-%20Deltas/documentos/Informe_Simulador_Hidrico_3D_Deltas.docx">Word</a> <span class="peso">0.9 MB</span></td><td data-titulo="Manual de uso"><a href="simulador-hidrico-3D%20-%20Deltas/documentos/Manual_Simulador_Hidrico_3D_Deltas.pdf" target="_blank" rel="noopener">PDF</a> <span class="peso">4.7 MB</span> · <a href="simulador-hidrico-3D%20-%20Deltas/documentos/Manual_Simulador_Hidrico_3D_Deltas.docx">Word</a> <span class="peso">5.1 MB</span></td><td data-titulo="Recorrido"><a href="#recorrido-5">Video</a> <span class="peso">6.7 MB</span> · <a href="GIF/05_Deltas.gif" target="_blank" rel="noopener">GIF</a> <span class="peso">18.5 MB</span></td></tr>
+          <tr><th scope="row"><a href="simulador-hidrico-3D%20-%20Costas/">6 · Costas</a></th><td data-titulo="Informe técnico"><a href="simulador-hidrico-3D%20-%20Costas/documentos/Informe_Simulador_Hidrico_3D_Costas.pdf" target="_blank" rel="noopener">PDF</a> <span class="peso">1.5 MB</span> · <a href="simulador-hidrico-3D%20-%20Costas/documentos/Informe_Simulador_Hidrico_3D_Costas.docx">Word</a> <span class="peso">0.9 MB</span></td><td data-titulo="Manual de uso"><a href="simulador-hidrico-3D%20-%20Costas/documentos/Manual_Simulador_Hidrico_3D_Costas.pdf" target="_blank" rel="noopener">PDF</a> <span class="peso">4.7 MB</span> · <a href="simulador-hidrico-3D%20-%20Costas/documentos/Manual_Simulador_Hidrico_3D_Costas.docx">Word</a> <span class="peso">5.6 MB</span></td><td data-titulo="Recorrido"><a href="#recorrido-6">Video</a> <span class="peso">6.3 MB</span> · <a href="GIF/06_Costas.gif" target="_blank" rel="noopener">GIF</a> <span class="peso">22.9 MB</span></td></tr>
+          <tr><th scope="row"><a href="simulador-hidrico-3D%20-%20Oceanos/">7 · Océanos</a></th><td data-titulo="Informe técnico"><a href="simulador-hidrico-3D%20-%20Oceanos/documentos/Informe_Simulador_Hidrico_3D_Oceanos.pdf" target="_blank" rel="noopener">PDF</a> <span class="peso">1.7 MB</span> · <a href="simulador-hidrico-3D%20-%20Oceanos/documentos/Informe_Simulador_Hidrico_3D_Oceanos.docx">Word</a> <span class="peso">1.0 MB</span></td><td data-titulo="Manual de uso"><a href="simulador-hidrico-3D%20-%20Oceanos/documentos/Manual_Simulador_Hidrico_3D_Oceanos.pdf" target="_blank" rel="noopener">PDF</a> <span class="peso">4.9 MB</span> · <a href="simulador-hidrico-3D%20-%20Oceanos/documentos/Manual_Simulador_Hidrico_3D_Oceanos.docx">Word</a> <span class="peso">5.7 MB</span></td><td data-titulo="Recorrido"><a href="#recorrido-7">Video</a> <span class="peso">8.3 MB</span> · <a href="GIF/07_Oceanos.gif" target="_blank" rel="noopener">GIF</a> <span class="peso">20.8 MB</span></td></tr>
+          <tr><th scope="row"><a href="simulador-hidrico-3D%20-%20Sistema%20conectado/">8 · Sistema conectado</a></th><td data-titulo="Informe técnico"><a href="simulador-hidrico-3D%20-%20Sistema%20conectado/documentos/Informe_Simulador_Hidrico_3D_Sistema_Conectado.pdf" target="_blank" rel="noopener">PDF</a> <span class="peso">1.5 MB</span> · <a href="simulador-hidrico-3D%20-%20Sistema%20conectado/documentos/Informe_Simulador_Hidrico_3D_Sistema_Conectado.docx">Word</a> <span class="peso">1.0 MB</span></td><td data-titulo="Manual de uso"><a href="simulador-hidrico-3D%20-%20Sistema%20conectado/documentos/Manual_Simulador_Hidrico_3D_Sistema_Conectado.pdf" target="_blank" rel="noopener">PDF</a> <span class="peso">5.8 MB</span> · <a href="simulador-hidrico-3D%20-%20Sistema%20conectado/documentos/Manual_Simulador_Hidrico_3D_Sistema_Conectado.docx">Word</a> <span class="peso">6.4 MB</span></td><td data-titulo="Recorrido"><a href="#recorrido-8">Video</a> <span class="peso">7.7 MB</span> · <a href="GIF/08_Sistema_conectado.gif" target="_blank" rel="noopener">GIF</a> <span class="peso">19.6 MB</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="recorridos">Recorridos en video</h2>
+    <p class="intro">Un recorrido de unos 45 segundos por cada simulador: girar la escena, cambiar de vista, mover un control, probar un escenario, leer la revisión del diseño y guardar los datos. Los mismos recorridos están en GIF para ponerlos en diapositivas o documentos.</p>
+    <div class="videos">
+      <figure id="recorrido-1">
+        <video controls preload="none" playsinline width="960" height="540" poster="VIDEOS/portadas/01_Lagunas.jpg"><source src="VIDEOS/01_Lagunas.mp4" type="video/mp4">Tu navegador no reproduce el video: <a href="VIDEOS/01_Lagunas.mp4">descárgalo</a>.</video>
+        <figcaption><b>1 · Lagunas</b><a href="VIDEOS/01_Lagunas.mp4" download>Descargar el video</a> <span class="peso">6.6 MB</span> <span class="sep">·</span> <a href="GIF/01_Lagunas.gif" target="_blank" rel="noopener">GIF</a> <span class="peso">18.2 MB</span></figcaption>
+      </figure>
+      <figure id="recorrido-2">
+        <video controls preload="none" playsinline width="960" height="540" poster="VIDEOS/portadas/02_Lagos.jpg"><source src="VIDEOS/02_Lagos.mp4" type="video/mp4">Tu navegador no reproduce el video: <a href="VIDEOS/02_Lagos.mp4">descárgalo</a>.</video>
+        <figcaption><b>2 · Lagos</b><a href="VIDEOS/02_Lagos.mp4" download>Descargar el video</a> <span class="peso">4.9 MB</span> <span class="sep">·</span> <a href="GIF/02_Lagos.gif" target="_blank" rel="noopener">GIF</a> <span class="peso">11.7 MB</span></figcaption>
+      </figure>
+      <figure id="recorrido-3">
+        <video controls preload="none" playsinline width="960" height="540" poster="VIDEOS/portadas/03_Rios_exorreicos.jpg"><source src="VIDEOS/03_Rios_exorreicos.mp4" type="video/mp4">Tu navegador no reproduce el video: <a href="VIDEOS/03_Rios_exorreicos.mp4">descárgalo</a>.</video>
+        <figcaption><b>3 · Ríos exorreicos</b><a href="VIDEOS/03_Rios_exorreicos.mp4" download>Descargar el video</a> <span class="peso">23.6 MB</span> <span class="sep">·</span> <a href="GIF/03_Rios_exorreicos.gif" target="_blank" rel="noopener">GIF</a> <span class="peso">23.9 MB</span></figcaption>
+      </figure>
+      <figure id="recorrido-4">
+        <video controls preload="none" playsinline width="960" height="540" poster="VIDEOS/portadas/04_Cienagas.jpg"><source src="VIDEOS/04_Cienagas.mp4" type="video/mp4">Tu navegador no reproduce el video: <a href="VIDEOS/04_Cienagas.mp4">descárgalo</a>.</video>
+        <figcaption><b>4 · Ciénagas</b><a href="VIDEOS/04_Cienagas.mp4" download>Descargar el video</a> <span class="peso">6.4 MB</span> <span class="sep">·</span> <a href="GIF/04_Cienagas.gif" target="_blank" rel="noopener">GIF</a> <span class="peso">13.9 MB</span></figcaption>
+      </figure>
+      <figure id="recorrido-5">
+        <video controls preload="none" playsinline width="960" height="540" poster="VIDEOS/portadas/05_Deltas.jpg"><source src="VIDEOS/05_Deltas.mp4" type="video/mp4">Tu navegador no reproduce el video: <a href="VIDEOS/05_Deltas.mp4">descárgalo</a>.</video>
+        <figcaption><b>5 · Deltas</b><a href="VIDEOS/05_Deltas.mp4" download>Descargar el video</a> <span class="peso">6.7 MB</span> <span class="sep">·</span> <a href="GIF/05_Deltas.gif" target="_blank" rel="noopener">GIF</a> <span class="peso">18.5 MB</span></figcaption>
+      </figure>
+      <figure id="recorrido-6">
+        <video controls preload="none" playsinline width="960" height="540" poster="VIDEOS/portadas/06_Costas.jpg"><source src="VIDEOS/06_Costas.mp4" type="video/mp4">Tu navegador no reproduce el video: <a href="VIDEOS/06_Costas.mp4">descárgalo</a>.</video>
+        <figcaption><b>6 · Costas</b><a href="VIDEOS/06_Costas.mp4" download>Descargar el video</a> <span class="peso">6.3 MB</span> <span class="sep">·</span> <a href="GIF/06_Costas.gif" target="_blank" rel="noopener">GIF</a> <span class="peso">22.9 MB</span></figcaption>
+      </figure>
+      <figure id="recorrido-7">
+        <video controls preload="none" playsinline width="960" height="540" poster="VIDEOS/portadas/07_Oceanos.jpg"><source src="VIDEOS/07_Oceanos.mp4" type="video/mp4">Tu navegador no reproduce el video: <a href="VIDEOS/07_Oceanos.mp4">descárgalo</a>.</video>
+        <figcaption><b>7 · Océanos</b><a href="VIDEOS/07_Oceanos.mp4" download>Descargar el video</a> <span class="peso">8.3 MB</span> <span class="sep">·</span> <a href="GIF/07_Oceanos.gif" target="_blank" rel="noopener">GIF</a> <span class="peso">20.8 MB</span></figcaption>
+      </figure>
+      <figure id="recorrido-8">
+        <video controls preload="none" playsinline width="960" height="540" poster="VIDEOS/portadas/08_Sistema_conectado.jpg"><source src="VIDEOS/08_Sistema_conectado.mp4" type="video/mp4">Tu navegador no reproduce el video: <a href="VIDEOS/08_Sistema_conectado.mp4">descárgalo</a>.</video>
+        <figcaption><b>8 · Sistema conectado</b><a href="VIDEOS/08_Sistema_conectado.mp4" download>Descargar el video</a> <span class="peso">7.7 MB</span> <span class="sep">·</span> <a href="GIF/08_Sistema_conectado.gif" target="_blank" rel="noopener">GIF</a> <span class="peso">19.6 MB</span></figcaption>
+      </figure>
+    </div>
   </main>
   <footer>Realizado por estudiantes de primer semestre Andrés Mauricio Peñaloza Fernández & Eliana Carolina María Wong Lubo para el proyecto integrador de Álgebra y Geometría Analítica - Luis Mario Duarte Sánchez; Álgebra lineal aplicada - Ellery Gregorio Chacuto López e Introducción a las ciencias del agua y a la tecnología - David Ricardo De León Pérez & Jaris Jesid González Moreno, 2026-II.  · Institución Universitaria de Santa Marta (USM) · Programa de Ingeniería del Agua y Desarrollo Sostenible.</footer>
 </body>
