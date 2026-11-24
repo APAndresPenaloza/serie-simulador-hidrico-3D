@@ -3794,11 +3794,15 @@ function aplicarCompartido(e) {
 }
 
 /** Los parámetros de los controles, en texto (para comparar con los de referencia). */
+// Las velocidades de la aducción y de la conducción salen del caudal y del diámetro, que ya
+// están en la lista: no se repiten entre los parámetros que cambiaron.
+const DERIVADOS = new Set(['Vaduccion', 'Vdistribucion']);
+
 function filasParametros() {
   const filas = [];
   const vistos = new Set();
   for (const c of CONTROLES) {
-    if (c.grupo || c.accion) continue;
+    if (c.grupo || c.accion || DERIVADOS.has(c.id)) continue;
     const id = c.clave ?? c.tubo ?? c.id;
     if (vistos.has(id)) continue;
     vistos.add(id);

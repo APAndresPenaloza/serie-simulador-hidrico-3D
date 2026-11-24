@@ -24,11 +24,13 @@ js/app.js              Pestañas, controles, resultados, ecuaciones con valores 
 js/escena3d.js         Escena 3D con Three.js
 js/excel.js            Escritor de archivos .xlsx sin librerías (el mismo del simulador de ríos)
 js/nucleo/             Núcleo común de la serie: controlador (app-base), escena base, gráficas,
-                       formatos, registro y Excel (datos) y contrato de conexión (conexion)
+                       formatos, registro y Excel (datos), contrato de conexión (conexion) e
+                       informe con código QR (informe, qr)
 lib/                   Three.js 0.170 y Chart.js 4.4 (copias locales, licencia MIT)
 tests/modelo.test.js   Pruebas del modelo con valores calculados a mano
 tests/sistema.test.js  Pruebas del sistema: escenario base, clima, páramo, balance, histéresis, vaciado, año
 tests/datos.test.js    Pruebas del libro de Excel, del registro y de la frontera de conexión
+tests/informe.test.js  Pruebas del estado que viaja en el código QR y del QR
 documentos/            Informe técnico científico y manual de usuario (.docx)
 ```
 

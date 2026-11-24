@@ -163,6 +163,77 @@ const path = require('path');
     await page.screenshot({ path: path.join(out, 'img', `esc_${e.id}.png`) });
   }
   await page.close();
+
+  // ── 5. Pestaña Informe: la pestaña, la vista previa, la primera hoja y el QR ──
+  // Un caso de ejemplo: se cambia un control de la segunda pestaña y corre el reloj tres días.
+  const preparar = async (pg) => pg.evaluate(() => {
+    const s = window.__sim;
+    const val = (f) => (typeof f === 'function' ? f(s.p, s.r) : f);
+    const apto = (x) => !x.tipo && !x.grupo && x.clave && !x.leer && Number.isFinite(val(x.min)) && Number.isFinite(val(x.max)) && (!x.visible || x.visible(s.p, s.r, s.sim));
+    const tabs = s.def.tabs.map((t) => t.id);
+    let c = s.def.controles.find((x) => apto(x) && x.tab === tabs[1]) ?? s.def.controles.find(apto);
+    if (c) s.control(c.id, Number((val(c.min) + 0.37 * (val(c.max) - val(c.min))).toFixed(c.dec ?? 2)));
+    else {
+      c = s.def.controles.find((x) => x.tipo === 'opciones' && x.clave && x.clave !== 'escenario');
+      const ops = typeof c.opciones === 'function' ? c.opciones(s.p, s.r) : c.opciones;
+      s.control(c.id, ops.find((o) => String(o.valor) !== String(s.p[c.clave])).valor);
+    }
+    s.avanzar(3 * 86400);
+    s.mostrarTab(c.tab);
+    return c.id;
+  });
+  const llenar = async (pg) => {
+    await pg.click('#pestana-informe');
+    await pg.fill('#infTitulo', 'Informe de la simulación');
+    await pg.fill('#infAutores', 'Andrés Mauricio Peñaloza Fernández y Eliana Carolina María Wong Lubo');
+    await pg.fill('#infNotas', 'Caso de ejemplo del manual: se cambió un control y se dejó correr el reloj tres días.');
+  };
+  page = await abrir(1500, 2000);
+  await preparar(page);
+  await llenar(page);
+  await page.waitForTimeout(500);
+  await page.locator('#ficha-informe').screenshot({ path: path.join(out, 'img', 'informe.png') });
+  await page.close();
+
+  page = await abrir(1600, 1000);
+  await preparar(page);
+  await page.evaluate(() => window.__dibujar(3));
+  await llenar(page);
+  const ejemplo = await page.evaluate(() => ({ url: window.__sim.url(), parametros: window.__sim.parametrosCambiados(), reloj: window.__sim.relojTexto(window.__sim.sim.t) }));
+  const html = await page.evaluate(() => window.__sim.informe());
+  await page.waitForSelector('#vistaInforme iframe');
+  await page.waitForTimeout(1500);
+  await page.screenshot({ path: path.join(out, 'img', 'informe_vista.png') });
+  await page.close();
+  fs.writeFileSync(path.join(out, 'informe_ejemplo.html'), html ?? '');
+  // Primera hoja del informe tal como sale impresa (PDF → PNG)
+  page = await browser.newPage();
+  await page.setContent(html ?? '', { waitUntil: 'load' });
+  await page.emulateMedia({ media: 'print' });
+  const pdf = path.join(out, 'informe_ejemplo.pdf');
+  await page.pdf({ path: pdf, preferCSSPageSize: true, printBackground: true });
+  await page.close();
+  const { execFileSync } = require('child_process');
+  execFileSync('pdftoppm', ['-r', '110', '-f', '1', '-l', '1', '-png', '-singlefile', pdf, path.join(out, 'img', 'informe_hoja')]);
+  const paginas = Number(/Pages:\s+(\d+)/.exec(execFileSync('pdfinfo', [pdf]).toString())?.[1] ?? 0);
+  // El simulador abierto desde el QR (en local: la misma dirección, con el servidor de la prueba)
+  const SITIO = 'https://apandrespenaloza.github.io/serie-simulador-hidrico-3D/';
+  const local = ejemplo.url.replace(SITIO, new URL('..', url).href);
+  page = await browser.newPage({ viewport: { width: 1600, height: 1000 }, deviceScaleFactor: 1.5 });
+  page.on('pageerror', (e) => errores.push('PAGEERROR(qr) ' + e.message));
+  await page.goto(local, { waitUntil: 'load' });
+  await page.waitForFunction(() => window.__sim && document.documentElement.dataset.listo === '1', null, { timeout: 30000 });
+  await page.evaluate(() => {
+    document.getElementById('ayuda')?.classList.add('oculta');
+    const e = window.__sim.escena;
+    if (e?.renderer) { e.renderer.setAnimationLoop(null); for (let i = 0; i < 3; i++) { if (e.vuelo) e.vuelo.t = 1; e.animar(); } }
+  });
+  await page.waitForTimeout(600);
+  await page.screenshot({ path: path.join(out, 'img', 'informe_qr.png') });
+  const abierto = await page.evaluate(() => ({ reloj: window.__sim.relojTexto(window.__sim.sim.t), aviso: document.getElementById('avisoCompartido')?.textContent ?? '' }));
+  await page.close();
+  fs.writeFileSync(path.join(out, 'informe.json'), JSON.stringify({ ...ejemplo, longitud: ejemplo.url.length, paginas, abierto }, null, 1));
+
   await browser.close();
   fs.writeFileSync(path.join(out, 'errores.txt'), errores.join('\n'));
   console.log(`${datos.tabs.length} pestañas, ${datos.escenarios.length} escenarios, ${errores.length} errores`);

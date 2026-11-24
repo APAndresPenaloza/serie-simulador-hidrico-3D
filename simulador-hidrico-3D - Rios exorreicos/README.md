@@ -32,9 +32,11 @@ js/huella.js          Huella hídrica verde, azul y gris de los cultivos, CO₂ 
 js/reynolds.js        Animación del experimento de Reynolds (laminar, transición, turbulento)
 js/datos.js           Registro de la simulación, escenarios y armado del libro de Excel
 js/excel.js           Escritor de archivos .xlsx (XML + ZIP con compresión DEFLATE), sin librerías
-js/app.js             Controles, tiempo simulado, métricas, plano de la red, ecuaciones y pestañas Datos y Conexión
+js/app.js             Controles, tiempo simulado, métricas, plano de la red, ecuaciones y pestañas Datos, Informe y Conexión
 js/nodo.js            El río como eslabón de la serie: lo que entrega a la ciénaga y cómo recibe el agua del lago
 js/conexion.js        Contrato de frontera de la serie (versión 1) y enlace en vivo; copia de _nucleo/js/nucleo/conexion.js
+js/informe.js         Pestaña Informe: informe para imprimir con código QR; copia de _nucleo/js/nucleo/informe.js
+js/qr.js              Generador de códigos QR (qrcode-generator 1.4.4, licencia MIT); copia del núcleo
 lib/                  Three.js 0.170 y Chart.js 4.4 (copias locales, licencia MIT)
 tests/modelo.test.js  Pruebas del modelo con valores calculados a mano
 tests/diseno.test.js  Pruebas del diseño (catálogo, demanda, bomba, costo mensual, red, sistema completo)
@@ -47,6 +49,7 @@ tests/represa.test.js Pruebas de la represa (embalse, operación, central, líne
 tests/huella.test.js  Pruebas de la huella hídrica, del carbono del transporte y de la inundación del lote
 tests/lluvia.test.js  Pruebas de la lluvia (lluvia–caudal, El Niño y La Niña, curva IDF, arroyo, deslizamientos, avenida, alertas)
 tests/conexion.test.js Pruebas de la conexión con la serie (frontera de salida, agua del lago, mezcla, red)
+tests/informe.test.js Pruebas del estado que viaja en el código QR y del QR
 ```
 
 Las librerías van incluidas en `lib/` y el Excel se genera con código propio, así que el simulador no depende de ningún CDN.

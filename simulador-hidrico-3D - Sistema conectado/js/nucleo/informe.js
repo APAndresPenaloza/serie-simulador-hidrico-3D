@@ -342,7 +342,7 @@ function documento(d) {
   .resumen { display: flex; flex-wrap: wrap; gap: 2mm 6mm; font-size: 9.5pt; margin: 2.5mm 0 0; }
   .resumen b { font-size: 12pt; } .resumen .ok b { color: #2F7D5B; } .resumen .aviso b { color: #B7790C; } .resumen .alerta b { color: #C0422A; }
   .escena img, figure.figura img { width: 100%; display: block; border-radius: 1.5mm; border: 1px solid #C6D2D1; }
-  .escena img { max-height: 118mm; object-fit: contain; background: #F6F8F7; }
+  .escena img { max-height: 100mm; object-fit: contain; background: #F6F8F7; }
   figure { margin: 2mm 0 3mm; break-inside: avoid; page-break-inside: avoid; }
   figcaption, .nota { font-size: 8.5pt; color: #4B6670; margin-top: 1mm; }
   table { width: 100%; border-collapse: collapse; font-size: 9.2pt; }

@@ -21,7 +21,7 @@ js/nodo.js             El lago como nodo de la serie (recibe de la laguna, entre
 js/hojas.js            Hojas propias del Excel (con fórmulas)
 js/app.js              Pestañas, controles, resultados, ecuaciones y gráficas
 js/escena3d.js         Escena 3D con Three.js
-js/excel.js, js/nucleo/, lib/   Núcleo común de la serie y librerías locales
+js/excel.js, js/nucleo/, lib/   Núcleo común de la serie (con la pestaña Informe y su código QR) y librerías locales
 tests/                 Pruebas del modelo, del sistema y de los datos (npm test)
 documentos/            Informe técnico científico y manual de usuario (.docx)
 ```
