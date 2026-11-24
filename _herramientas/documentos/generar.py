@@ -21,6 +21,7 @@ AQUI = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, AQUI)
 from docx_serie import Documento, ppr, runs, runs_html, _run  # noqa: E402
 from graficas import dibujar  # noqa: E402
+import icat  # noqa: E402
 
 SERIE = os.path.abspath(os.path.join(AQUI, '..', '..'))
 CARPETAS = {
@@ -233,7 +234,7 @@ def informe(pid, ext, salida, paginas=None):
     p.append(doc._imagen_run(img(C.get('portada', 'pantalla.png')), doc._limitar_alto(img(C.get('portada', 'pantalla.png')), 13.5, 8.5)))
     for t in ['', 'PRESENTADO POR:', *[a.upper() for a in AUTORES], '', 'DOCENTE A CARGO:', 'LUIS DUARTE', '', '',
               'INSTITUCIÓN UNIVERSITARIA DE SANTA MARTA (USM)', 'PROGRAMA DE INGENIERÍA DEL AGUA Y DESARROLLO SOSTENIBLE',
-              'FACULTAD DE INGENIERÍA', 'SANTA MARTA D.T.C.H.,', C.get('fecha', '6 DE NOVIEMBRE DE 2026')]:
+              'FACULTAD DE INGENIERÍA', 'SANTA MARTA D.T.C.H.,', C.get('fecha', '24 DE NOVIEMBRE DE 2026')]:
         doc.parrafo(t, centro())
     doc.parrafo('Índice', ppr(salto=True, despues=240, primera=284, jc='center'), negrita=True)
     doc.indice(paginas)
@@ -249,7 +250,8 @@ def informe(pid, ext, salida, paginas=None):
         p.append(r)
 
     tabs = {t['id']: t for t in D['tabs']}
-    for item in C['secciones']:
+
+    def pintar(item):
         tipo, val = item[0], item[1]
         if tipo in ('h1', 'h2', 'h3'):
             doc.titulo(int(tipo[1]), val)
@@ -290,8 +292,16 @@ def informe(pid, ext, salida, paginas=None):
         else:
             raise ValueError(f'bloque desconocido: {tipo}')
 
+    for item in C['secciones']:
+        pintar(item)
+    # Sección del curso Introducción a las Ciencias del Agua y a la Tecnología (icat.py)
+    n = 1 + max([int(m.group(1)) for x in C['secciones'] if x[0] == 'h1' for m in [re.match(r'(\d+)\.', x[1])] if m] or [3])
+    for item in icat.bloques(pid, n, doc.n_tab + 1):
+        pintar(item)
+
     doc.titulo(1, 'Referencias')
-    for ref in sorted(C['referencias'], key=lambda r: re.sub(r'[*¿¡«]', '', r).lower()):
+    refs = C['referencias'] + [r for r in icat.REFERENCIAS if r not in C['referencias']]
+    for ref in sorted(refs, key=lambda r: re.sub(r'[*¿¡«]', '', r).lower()):
         p = doc.parrafo('', ppr(despues=0, linea=260, regla='exact', izquierda=720, colgante=720, jc='left'))
         for r in runs(ref, tam=11):
             p.append(r)
@@ -302,6 +312,52 @@ def informe(pid, ext, salida, paginas=None):
 # ═══════════════════════════════════════════════════════════════════════════
 # MANUAL DE USUARIO
 # ═══════════════════════════════════════════════════════════════════════════
+def capitulo_informe(doc, titulo, pref, img, existe, inf, parte='capítulo', extra=None, altos=(16, 17)):
+    """Capítulo (o anexo) del manual sobre la pestaña Informe y su código QR."""
+    doc.titulo(1, titulo)
+    doc.texto('La pestaña Informe arma un informe de la simulación para imprimir o guardar en PDF. Trae el estado de los indicadores, los parámetros que cambiaron (con su valor de referencia) y, de cada pestaña que se elija, sus figuras, resultados, revisión del diseño, tablas, modelo matemático y gráficas, junto con la imagen de la escena 3D y sus etiquetas. En la primera hoja lleva un código QR que abre el simulador publicado con los mismos valores y la misma fecha del reloj, de modo que cualquiera puede repetir el caso.')
+    if extra:
+        doc.texto(extra)
+    if existe('informe.png'):
+        doc.figura(img('informe.png'), 'Pestaña Informe', 'Datos del informe, pestañas y partes que se incluyen, botón «Crear informe con QR» y, abajo, el código QR del momento con el botón «Copiar enlace».', ancho_cm=8.5, alto_max_cm=altos[0])
+    doc.titulo(2, f'{pref}.1 Crear el informe')
+    doc.tabla(['Paso', 'Qué hacer'], [
+        ['1', 'Dejar el simulador en el caso que se quiere presentar: escenario, controles y fecha del reloj (conviene pausarlo).'],
+        ['2', 'Abrir la pestaña Informe y escribir el título, los autores y las observaciones. El título y los autores se recuerdan en ese navegador para el próximo informe.'],
+        ['3', 'Marcar las pestañas que van en el informe («Todas» y «Ninguna» las marcan de una vez) y lo que lleva cada una: escena 3D, figuras y planos, tablas, modelo matemático y gráficas.'],
+        ['4', 'Pulsar «Crear informe con QR». El simulador recorre las pestañas elegidas, con los colores del tema claro (el papel es blanco), y abre la vista previa.'],
+        ['5', 'En la vista previa, «Imprimir o guardar PDF» abre el cuadro de impresión del navegador (elegir «Guardar como PDF»); «Abrir en otra pestaña» sirve en el celular; «Descargar HTML» guarda el informe como una página que se abre sin internet; «Cerrar» (o Esc) vuelve al simulador.'],
+    ], [0.6, 7.4])
+    if existe('informe_vista.png'):
+        doc.figura(img('informe_vista.png'), 'Vista previa del informe', 'La ventana muestra el informe tal como se imprime, con los botones para imprimir, abrir en otra pestaña, descargar o cerrar.')
+    doc.titulo(2, f'{pref}.2 Qué trae el informe')
+    doc.tabla(['Parte', 'Contenido'], [
+        ['Encabezado', 'Título, simulador, autores, fecha del informe, reloj simulado, escenario, pestañas incluidas y el código QR.'],
+        ['Estado de la simulación', 'Los indicadores de la barra superior con su color y el conteo de criterios que se cumplen, en aviso o por corregir.'],
+        ['Observaciones', 'El texto que se escribió en la pestaña.'],
+        ['Escena 3D', 'La imagen de la escena en ese momento, con sus etiquetas.'],
+        ['Parámetros que cambiaron', 'Cada control cuyo valor es distinto del de referencia (el del escenario elegido), con los dos valores.'],
+        ['Una sección por pestaña', 'Figuras y planos, resultados, revisión del diseño, tablas, modelo matemático con los valores sustituidos y gráficas.'],
+        ['Pie', 'Los créditos de la serie y el enlace completo de la simulación.'],
+    ], [2.2, 5.8])
+    if existe('informe_hoja.png'):
+        nota = 'Hoja A4 tal como sale al guardar en PDF.'
+        if inf and inf.get('paginas'):
+            nota += f' El informe de ejemplo, con todas las pestañas, tiene {inf["paginas"]} páginas.'
+        doc.figura(img('informe_hoja.png'), 'Primera hoja de un informe de ejemplo', nota, ancho_cm=12, alto_max_cm=altos[1])
+    doc.titulo(2, f'{pref}.3 El código QR y el enlace')
+    doc.texto('El código QR lleva, en la dirección del simulador después de «#s=», el escenario, la fecha del reloj, los parámetros que cambiaron, el estado que avanza con el tiempo (niveles, volúmenes y demás), la pestaña y la vista de la escena. Al escanearlo se abre la página publicada de la serie con esos valores, en pausa, y un aviso arriba del panel lo dice: «Reanudar» sigue la simulación desde ahí y «Reiniciar» vuelve al escenario base. El enlace no guarda datos personales ni necesita una cuenta.')
+    if inf:
+        cambio = inf['parametros'][0] if inf.get('parametros') else None
+        if cambio:
+            et = re.sub(r'<[^>]+>', '', cambio['etiqueta'])
+            doc.texto(f'En el ejemplo de este {parte} se cambió «{et}» de {cambio["referencia"]} a {cambio["valor"]} {re.sub(r"<[^>]+>", "", cambio["unidad"])}'.rstrip() + f' y el reloj llegó a {inf["reloj"]}; la dirección completa tiene {inf["longitud"]} caracteres.')
+    doc.texto('La pestaña muestra también el código QR del momento, que se renueva cada pocos segundos mientras corre el reloj, y el botón «Copiar enlace», para compartir la simulación sin imprimir nada.')
+    if existe('informe_qr.png'):
+        doc.figura(img('informe_qr.png'), 'El simulador abierto desde el código QR', 'Los mismos valores, la misma fecha del reloj y la misma pestaña del informe; el aviso de arriba del panel dice que es una simulación compartida y que está en pausa.')
+    doc.caja('Nota.', 'Si se cambian muchísimos parámetros o se aplica una frontera importada muy grande, la dirección puede quedar demasiado larga para un código QR: el informe lo dice y trae el enlace completo en el pie.')
+
+
 def manual(pid, ext, salida, paginas=None):
     D = json.load(open(os.path.join(ext, 'datos.json'), encoding='utf-8'))
     M = rellenar_todo(cargar_contenido(pid).MANUAL, Relleno(D))
@@ -311,7 +367,7 @@ def manual(pid, ext, salida, paginas=None):
     doc = Documento(os.path.join(AQUI, 'plantillas', 'manual.docx'), 'manual')
     tabs = D['tabs']
     nombre_tab = {t['id']: t['nombre'] for t in tabs}
-    nombre_tab.update({'datos': 'Datos', 'conexion': 'Conexión'})
+    nombre_tab.update({'datos': 'Datos', 'informe': 'Informe', 'conexion': 'Conexión'})
     carpeta = CARPETAS[pid]
 
     # ── Portada ───────────────────────────────────────────────────────────
@@ -333,8 +389,9 @@ def manual(pid, ext, salida, paginas=None):
     n_tabs = len(tabs)
     cap_tab0 = 6
     cap_datos = cap_tab0 + n_tabs
-    caps = {'datos': cap_datos, 'conexion': cap_datos + 1, 'revision': cap_datos + 2, 'escenarios': cap_datos + 3,
-            'pruebas': cap_datos + 4, 'problemas': cap_datos + 5, 'glosario': cap_datos + 6}
+    caps = {'datos': cap_datos, 'informe': cap_datos + 1, 'conexion': cap_datos + 2, 'revision': cap_datos + 3, 'escenarios': cap_datos + 4,
+            'pruebas': cap_datos + 5, 'problemas': cap_datos + 6, 'glosario': cap_datos + 7}
+    inf = json.load(open(os.path.join(ext, 'informe.json'), encoding='utf-8')) if os.path.exists(os.path.join(ext, 'informe.json')) else None
 
     # ── 1. Qué es ─────────────────────────────────────────────────────────
     doc.titulo(1, '1. Qué es el simulador')
@@ -346,7 +403,7 @@ def manual(pid, ext, salida, paginas=None):
     filas = [[e['titulo'], M['componentes'].get(e['id'], ''), nombre_tab.get(e['tab'], '—') if e['tab'] else '—'] for e in D['etiquetas']]
     doc.tabla(['Componente', 'Qué es', 'Pestaña'], filas, [2.4, 5.2, 1.7])
     doc.titulo(2, '1.3 Cómo está organizado este manual')
-    doc.texto(f'Los capítulos 2 a 5 explican cómo abrir el simulador, moverse por la pantalla y por la escena y usar los controles. Los capítulos {cap_tab0} a {cap_datos - 1} recorren las pestañas una por una: qué representa cada una, sus controles con su rango y su valor de base, sus resultados, la revisión del diseño, las ecuaciones y las gráficas. El capítulo {caps["datos"]} explica cómo guardar la simulación en Excel y el {caps["conexion"]}, cómo se conecta con los demás simuladores de la serie. Después vienen la revisión de todos los criterios de diseño, los escenarios guiados, las pruebas automáticas, la solución de problemas, un glosario y dos anexos con los valores del escenario base y las ecuaciones de cada pestaña.')
+    doc.texto(f'Los capítulos 2 a 5 explican cómo abrir el simulador, moverse por la pantalla y por la escena y usar los controles. Los capítulos {cap_tab0} a {cap_datos - 1} recorren las pestañas una por una: qué representa cada una, sus controles con su rango y su valor de base, sus resultados, la revisión del diseño, las ecuaciones y las gráficas. El capítulo {caps["datos"]} explica cómo guardar la simulación en Excel; el {caps["informe"]}, cómo armar un informe para imprimir con un código QR que vuelve a abrir la simulación, y el {caps["conexion"]}, cómo se conecta con los demás simuladores de la serie. Después vienen la revisión de todos los criterios de diseño, los escenarios guiados, las pruebas automáticas, la solución de problemas, un glosario y dos anexos con los valores del escenario base y las ecuaciones de cada pestaña.')
     doc.caja('Importante.', M['base'])
 
     # ── 2. Requisitos y acceso ────────────────────────────────────────────
@@ -382,7 +439,7 @@ def manual(pid, ext, salida, paginas=None):
     vel = ', '.join(v['nombre'] for v in D['reloj']['velocidades'])
     doc.texto(f'El reloj avanza el tiempo del modelo. Las velocidades disponibles son: {vel}. «Pausar» detiene el tiempo y «Reiniciar» vuelve al escenario base. Mientras el reloj corre, los resultados de la pestaña abierta y la escena cambian con el tiempo.')
     doc.titulo(2, '3.3 El panel de controles')
-    doc.texto(f'El panel tiene {n_tabs + 2} pestañas, en dos filas: {", ".join(t["nombre"] for t in tabs)}, Datos y Conexión. Cada pestaña de cálculo tiene la misma estructura: una introducción, los controles, los resultados, la revisión del diseño (con ✓, ! o ✗), las tablas, el modelo matemático con los valores sustituidos y una o dos gráficas con el punto del momento. Una pestaña con un criterio que no se cumple muestra un punto rojo junto a su nombre.')
+    doc.texto(f'El panel tiene {n_tabs + 3} pestañas, en dos o tres filas: {", ".join(t["nombre"] for t in tabs)}, Datos, Informe y Conexión. Cada pestaña de cálculo tiene la misma estructura: una introducción, los controles, los resultados, la revisión del diseño (con ✓, ! o ✗), las tablas, el modelo matemático con los valores sustituidos y una o dos gráficas con el punto del momento. Una pestaña con un criterio que no se cumple muestra un punto rojo junto a su nombre.')
     doc.titulo(2, '3.4 Vista en celular')
     doc.figura(img('movil.png'), 'El simulador en un celular', 'La escena queda arriba y el panel debajo; los botones de vista y las pestañas se adaptan al ancho de la pantalla.', ancho_cm=6.5)
 
@@ -508,6 +565,10 @@ def manual(pid, ext, salida, paginas=None):
     if existe('datos.png'):
         doc.figura(img('datos.png'), 'Pestaña Datos', 'El registro guarda una fila por intervalo mientras corre el reloj.', ancho_cm=8)
 
+    # ── Informe ───────────────────────────────────────────────────────────
+    ci = caps['informe']
+    capitulo_informe(doc, f'{ci}. Pestaña Informe: informe con código QR', ci, img, existe, inf)
+
     # ── Conexión ──────────────────────────────────────────────────────────
     doc.titulo(1, f'{caps["conexion"]}. Pestaña Conexión: la serie de simuladores')
     doc.texto(M.get('conexion', 'Este simulador es un eslabón de la serie que sigue el agua del páramo al océano. Entrega a sus vecinos su frontera de salida y aplica lo que le llega de aguas arriba o del mar. Se conecta de tres formas: con un archivo de frontera (.json), en vivo con otro simulador abierto en el mismo navegador, o con el proyecto Sistema conectado, que une todos los modelos.'))
@@ -562,6 +623,8 @@ def manual(pid, ext, salida, paginas=None):
         ['El Excel no se descarga', 'El navegador bloqueó la descarga; permitir las descargas del sitio local.'],
         ['El enlace en vivo no encuentra a los demás simuladores', 'Los simuladores deben abrirse desde el mismo servidor (mismo origen) y en el mismo navegador.'],
         ['Un resultado se ve raro después de mover muchos controles', 'Pulsar Reiniciar para volver al escenario base.'],
+        ['«Imprimir o guardar PDF» no hace nada en el celular', 'Usar «Abrir en otra pestaña» y, desde allí, el menú del navegador (Compartir o Imprimir); o «Descargar HTML».'],
+        ['El código QR abre el simulador pero con los valores de base', 'El lector cortó la dirección: debe llegar completa, con «#s=…» al final. Usar «Copiar enlace» y pegarlo en el navegador.'],
     ]
     if pid == 'sistema':
         filas.insert(0, ['La revisión dice que faltan proyectos', 'Las carpetas de la serie deben estar juntas y servirse desde la carpeta que las contiene.'])

@@ -93,6 +93,7 @@ for (const p of proyectos) {
   cpSync(join(nucleo, 'js', 'nucleo'), join(dir, 'js', 'nucleo'), { recursive: true });
   mkdirSync(join(dir, 'tests'), { recursive: true });
   cpSync(join(nucleo, 'tests', 'datos.test.js'), join(dir, 'tests', 'datos.test.js'));
+  cpSync(join(nucleo, 'tests', 'informe.test.js'), join(dir, 'tests', 'informe.test.js'));
   const meta = join(dir, 'proyecto.json');
   if (existsSync(meta)) {
     const m = JSON.parse(readFileSync(meta, 'utf8'));
@@ -100,4 +101,14 @@ for (const p of proyectos) {
     writeFileSync(join(dir, 'package.json'), JSON.stringify({ name: m.paquete, private: true, type: 'module', scripts: { test: 'node --test tests/*.test.js' } }, null, 2) + '\n');
   }
   console.log('sincronizado:', p);
+}
+
+// El simulador de ríos tiene su propio app.js, pero comparte la pestaña Informe y su código QR
+const rios = readdirSync(raiz).find((d) => d.includes('Rios exorreicos'));
+if (rios && (!pedidas.length || pedidas.some((x) => rios.includes(x)))) {
+  for (const a of ['informe.js', 'qr.js']) cpSync(join(nucleo, 'js', 'nucleo', a), join(raiz, rios, 'js', a));
+  // la prueba importa ../js/nucleo/informe.js: en ríos el módulo está en js/
+  const prueba = readFileSync(join(nucleo, 'tests', 'informe.test.js'), 'utf8').replace("'../js/nucleo/informe.js'", "'../js/informe.js'");
+  writeFileSync(join(raiz, rios, 'tests', 'informe.test.js'), prueba);
+  console.log('sincronizado (informe y QR):', rios);
 }

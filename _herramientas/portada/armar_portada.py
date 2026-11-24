@@ -69,8 +69,48 @@ for n, corto, titulo, desc, carpeta, archivo, medio in S:
         f'        <figcaption><b>{n} · {corto}</b><a href="{href(mp4)}" download>Descargar el video</a> <span class="peso">{peso(mp4)}</span> <span class="sep">·</span> <a href="{href(gif)}"{NUEVA}>GIF</a> <span class="peso">{peso(gif)}</span></figcaption>\n'
         f'      </figure>')
 
+# ── Relación con el curso Introducción a las Ciencias del Agua y a la Tecnología (icat.py) ──
+import re
+sys.path.insert(0, os.path.join(AQUI, '..', 'documentos'))
+import icat  # noqa: E402
+PID = {'Lagunas': 'lagunas', 'Lagos': 'lagos', 'Rios exorreicos': 'rios', 'Cienagas': 'cienagas', 'Deltas': 'deltas', 'Costas': 'costas', 'Oceanos': 'oceanos', 'Sistema conectado': 'sistema'}
+donde = {c: [] for c, _ in icat.TEMAS_CURSO}
+for n, corto, titulo, desc, carpeta, archivo, medio in S:
+    for tema, como, pestana in icat.PROYECTOS[PID[carpeta]]['temas']:
+        for c in re.findall(r'U1\.\d|B\d', tema):
+            if c in donde:
+                donde[c].append(f'<li title="{como}"><a href="{href(ruta(carpeta))}/">{corto}</a> <span class="pestana">{pestana}</span></li>')
+todos = '<li class="todos">Los ocho simuladores (sección «Relación con el curso» de cada informe técnico)</li>'
+curso = []
+for c, tema in icat.TEMAS_CURSO:
+    lista = donde[c] or [todos]
+    if c in ('U1.1', 'U1.2'):
+        lista = [todos] + donde[c]
+    curso.append(f'          <tr><th scope="row"><span class="codigo">{c}</span>{tema}</th><td><ul>{"".join(lista)}</ul></td></tr>')
+faltan = ''.join(f'<li>{re.sub(r"[*]", "", x)}</li>' for x in icat.COMUN_COMPLETAR[:2])
+
 html = open(os.path.join(AQUI, 'plantilla.html'), encoding='utf8').read()
 html = html.replace('{{TARJETAS}}', '\n'.join(tarjetas)).replace('{{FILAS}}', '\n'.join(filas)).replace('{{VIDEOS}}', '\n'.join(videos))
+html = html.replace('{{CURSO}}', '\n'.join(curso)).replace('{{FALTAN}}', faltan)
+
+# ── Póster del proyecto (si ya está en POSTER/) ────────────────────────────
+PDF_P, IMP_P, PPTX_P, VISTA_P = 'POSTER/Poster_Simulador_Hidrico_3D_70x100.pdf', 'POSTER/Poster_Simulador_Hidrico_3D_70x100_imprenta.pdf', 'POSTER/Poster_Simulador_Hidrico_3D_70x100.pptx', 'POSTER/poster_vista.jpg'
+poster = ''
+if all(os.path.exists(os.path.join(R, x)) for x in (PDF_P, IMP_P, PPTX_P, VISTA_P)):
+    poster = (
+        '\n    <h2 id="poster">Póster del proyecto</h2>\n'
+        '    <div class="poster">\n'
+        f'      <a href="{href(PDF_P)}"{NUEVA}><img src="{href(VISTA_P)}" alt="Póster de la serie Simulador hídrico 3D" width="700" height="1000" loading="lazy"></a>\n'
+        '      <div>\n'
+        '        <p class="intro">Póster vertical de <b>70 × 100 cm</b> para imprimir en litografía: la serie del páramo al océano, los ocho simuladores con su código QR, la pestaña Informe, la relación con los cursos y los créditos.</p>\n'
+        '        <ul>\n'
+        f'          <li><a href="{href(IMP_P)}"{NUEVA}>PDF para la imprenta</a> <span class="peso">{peso(IMP_P)}</span> · tamaño final 70 × 100 cm, con 3 mm de sangrado y marcas de corte.</li>\n'
+        f'          <li><a href="{href(PDF_P)}"{NUEVA}>PDF a tamaño final</a> <span class="peso">{peso(PDF_P)}</span> · 70 × 100 cm, para verlo en pantalla o imprimirlo sin cortar.</li>\n'
+        f'          <li><a href="{href(PPTX_P)}">PowerPoint editable</a> <span class="peso">{peso(PPTX_P)}</span> · una diapositiva de 70 × 100 cm; también se puede abrir en Canva (Crear diseño → Importar archivo).</li>\n'
+        '        </ul>\n'
+        '      </div>\n'
+        '    </div>')
+html = html.replace('{{POSTER}}', poster)
 assert '{{' not in html
 open(os.path.join(R, 'index.html'), 'w', encoding='utf8').write(html)
 print('index.html:', len(html), 'caracteres')

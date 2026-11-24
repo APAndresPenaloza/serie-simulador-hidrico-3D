@@ -42,7 +42,7 @@ valores de referencia editables; cada pestaña: intro, controles, Resultados, Re
 matemático (forma general + sustitución), 1–2 gráficas con el punto actual. Pestañas Datos (Excel) y Conexión.
 
 ## Estado (actualizar al avanzar)
-- Lagunas ✓ 30 · Lagos ✓ 25 · Ciénagas ✓ 27 · Deltas ✓ 21 · Costas ✓ 22 · Océanos ✓ 25 · Sistema conectado ✓ 26 pruebas (2026-11-13).
+- Lagunas ✓ 36 · Lagos ✓ 31 · Ciénagas ✓ 33 · Deltas ✓ 27 · Costas ✓ 28 · Océanos ✓ 31 · Sistema conectado ✓ 32 · Ríos ✓ 110 pruebas (2026-11-24; 328 en total).
 - 2026-11-13 · Ciénaga: caños en los dos sentidos (el río la llena en la creciente; la ciénaga le devuelve agua en el
   estiaje). Magdalena frente a los caños con piso en el nivel del mar (máx) y κ = 0.5 de la marea; alisios que inclinan
   el agua (Δη = C_D·(ρa/ρ)·U²·L/(g·h): +Δη/2 en los caños, −Δη/2 en la boca). Base: 43 días de retorno (abril neto < 0),
@@ -64,6 +64,21 @@ matemático (forma general + sustitución), 1–2 gráficas con el punto actual.
   documentos con _herramientas/documentos/pdf.py (ecuaciones como imágenes; LibreOffice sin módulo de fórmulas las
   deja en blanco). Cada simulador tiene en el encabezado «Serie · Informe · Manual · Video · GIF» (proyecto.json →
   "documentos"; en Ríos, a mano en su index.html). GIF/ y VIDEOS/ completos (8 y 8); VIDEOS/portadas/ para el portal.
+- 2026-11-24 · Pestaña Informe con código QR en los ocho simuladores (núcleo: js/nucleo/informe.js y qr.js; Ríos: js/informe.js
+  y js/qr.js, que copia sincronizar.mjs). El estado va en la dirección (#s= + base64url de {v, e, t, d, s, tab, vi}; series
+  de más de 8 números en deltas de 4 cifras): escenario, reloj, parámetros que cambiaron, estado que avanza, pestaña y
+  vista. Al abrir el enlace: mismos valores, en pausa y con aviso. El informe (HTML para imprimir o guardar en PDF) trae
+  estado, observaciones, escena 3D con etiquetas, parámetros que cambiaron y, por pestaña, figuras, resultados, revisión,
+  tablas, modelo matemático y gráficas (tema claro a la fuerza). 6 pruebas por proyecto (tests/informe.test.js).
+- 2026-11-24 · Curso Introducción a las Ciencias del Agua y a la Tecnología (carpeta del semestre I, revisada): sección
+  «Relación con el curso» en los ocho informes (documentos/icat.py; en Ríos, rios_curso.py) y tabla en la portada. El
+  contenido está de acuerdo con el curso; faltan UNT y µS/cm frente a la Res. 2115 de 2007, PTAP y PTAR, curva de
+  duración de caudales, caudal ecológico y asignación, intrusión salina explícita y el río a la escala del Gaira
+  (mediana 1.05 m³/s, Q95 0.28 m³/s; el modelo usa unos 6 m³/s). Recomendaciones para una próxima versión.
+- 2026-11-24 · Manuales: capítulo «Pestaña Informe» (generar.capitulo_informe); en Ríos, Anexo D en el PDF (rios_anexo.py,
+  con su línea y su enlace en el índice). Recorridos regrabados con _herramientas/grabacion (reloj falso de Playwright,
+  un cuadro por paso de 1/24 s; incluyen el informe con QR). Póster de 70 × 100 cm (_herramientas/poster → POSTER/:
+  PowerPoint, PDF exacto y PDF de imprenta con 3 mm de sangrado y marcas de corte).
 - Contrato v1 ampliado: MAGNITUDES_MAR.ascenso (mm/año, derivada del ascenso del océano) → deltas/costas ascensoMar.
 - RED: deltas también entrega a cienagas (caños). Prueba común revisa la red en los dos sentidos (salvo «sistema»).
 - Entradas que ya traen el clima se dividen por el factor climático del que recibe (ciénaga fRios/dH, costas fOla/fAporte).

@@ -24,7 +24,10 @@ Todo número de las tablas sale del simulador; el texto propio de cada proyecto 
    node extraer.cjs "http://localhost:8800/simulador-hidrico-3D%20-%20Lagunas/index.html" salida/lagunas
    ```
 
-   Deja `salida/lagunas/datos.json` y `salida/lagunas/img/`. Tarda unos 4 minutos por proyecto.
+   Deja `salida/lagunas/datos.json` y `salida/lagunas/img/`. Tarda unos 4 minutos por proyecto. Al final arma un
+   caso de ejemplo para la pestaña Informe (cambia un control de la segunda pestaña y corre el reloj tres días) y
+   guarda la pestaña, la vista previa, la primera hoja del informe, el simulador abierto desde el código QR e
+   `informe.json` (enlace, parámetros que cambiaron, páginas).
 
 3. Escribir (o revisar) `contenido/<id>.py` con dos diccionarios:
    - `INFORME`: título, línea de investigación, resumen y abstract, palabras clave, `secciones` (bloques
@@ -57,6 +60,26 @@ Todo número de las tablas sale del simulador; el texto propio de cada proyecto 
    aclara las imágenes con transparencia (marca de agua de la portada del informe de Ríos). Después,
    `python3 _herramientas/portada/armar_portada.py` (desde la raíz) actualiza los enlaces y pesos de la portada.
 
+6. Relación con el curso Introducción a las Ciencias del Agua y a la Tecnología: `icat.py` tiene, por proyecto,
+   las ciencias, la tabla de temas del curso (unidad 1 y bloques 2 a 6) con la pestaña donde se ven, las cuatro
+   dimensiones y lo que el simulador no cubre. `generar.py` la pone como última sección del informe, antes de las
+   referencias, y la portada de la serie arma con ella su tabla «Relación con el curso».
+
+## Ríos exorreicos (proyecto de referencia)
+
+Su informe es el .docx original del proyecto y su manual se publica solo en PDF (en la raíz de su carpeta), así
+que no se generan con `generar.py`:
+
+```
+python3 -I rios_curso.py                                   # agrega al informe la sección del curso (una vez)
+node rios_informe.cjs http://localhost:8800/ salida/rios   # capturas de la pestaña Informe del río
+python3 -I rios_anexo.py salida/rios                       # Anexo D del manual (PDF), con su línea en el índice
+```
+
+`rios_anexo.py` arma el anexo con el mismo capítulo de los otros manuales y la plantilla del manual, lo agrega
+al final del PDF numerado a continuación y escribe su línea y su enlace en el índice; si se corre otra vez,
+reemplaza el anexo anterior.
+
 ## Revisión
 
 - Convertir a PDF (`soffice --headless --convert-to pdf`) y mirar todas las páginas (`pdftoppm -r 40`).
@@ -75,4 +98,8 @@ Todo número de las tablas sale del simulador; el texto propio de cada proyecto 
 | `graficas.py` | Vuelve a dibujar las gráficas del simulador con matplotlib (serifas, paneles (a), (b)) |
 | `plantillas.py` | Crea `plantillas/informe.docx` y `plantillas/manual.docx` a partir de los documentos originales |
 | `pdf.py` | Exporta los .docx a PDF con las ecuaciones como imágenes (para la página de la serie) |
+| `icat.py` | Relación de cada simulador con el curso Introducción a las Ciencias del Agua y a la Tecnología |
+| `rios_curso.py` | Agrega esa sección al informe de Ríos (.docx original), con su entrada en el índice |
+| `rios_informe.cjs` | Capturas de la pestaña Informe del simulador de ríos |
+| `rios_anexo.py` | Anexo D del manual de Ríos (PDF): la pestaña Informe y su código QR |
 | `contenido/<id>.py` | Texto propio de cada proyecto |

@@ -77,6 +77,33 @@
     .nota { font-size: 14px; color: var(--tinta-2); background: var(--panel); border-left: 3px solid var(--ocre); padding: 10px 14px; border-radius: 4px; margin-top: 18px; max-width: 80ch; }
     code { font-size: 13px; background: var(--fondo); padding: 1px 5px; border-radius: 3px; }
     footer { max-width: 1100px; margin: 0 auto; padding: 0 20px 32px; font-size: 13px; color: var(--tinta-2); }
+    .qr-bloque { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+    .qr-bloque img { width: 100%; height: auto; display: block; border-radius: 10px; border: 1px solid var(--linea); background: var(--panel); }
+    .qr-bloque ol { margin: 0; padding-left: 20px; color: var(--tinta-2); display: grid; gap: 6px; max-width: 60ch; }
+    .qr-bloque ol b { color: var(--tinta); }
+    @media (max-width: 800px) { .qr-bloque { grid-template-columns: 1fr; } }
+    table.curso { width: 100%; border-collapse: collapse; font-size: 14px; }
+    table.curso th, table.curso td { padding: 11px 14px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--linea); }
+    table.curso thead th { font-size: 12px; font-weight: 650; text-transform: uppercase; letter-spacing: .04em; color: var(--tinta-2); }
+    table.curso tbody tr:last-child th, table.curso tbody tr:last-child td { border-bottom: 0; }
+    table.curso tbody th { width: 42%; font-weight: 600; }
+    table.curso .codigo { display: inline-block; min-width: 44px; font-size: 12px; font-weight: 750; color: var(--agua); }
+    table.curso ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 8px; }
+    table.curso li { padding: 2px 10px; border: 1px solid var(--linea); border-radius: 999px; background: var(--fondo); font-size: 13px; }
+    table.curso li.todos { border-style: dashed; }
+    table.curso li a { font-weight: 650; text-decoration: none; }
+    table.curso .pestana { color: var(--tinta-2); }
+    table.curso .pestana::before { content: "· "; }
+    @media (max-width: 700px) {
+      table.curso thead { display: none; }
+      table.curso, table.curso tbody, table.curso tr, table.curso th, table.curso td { display: block; }
+      table.curso tbody th { width: auto; border: 0; padding-bottom: 4px; }
+    }
+    .nota ul { margin: 6px 0 0; padding-left: 20px; }
+    .poster { display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 22px; align-items: start; }
+    .poster img { width: 100%; height: auto; display: block; border-radius: 6px; border: 1px solid var(--linea); box-shadow: 0 4px 16px rgba(0,0,0,.12); }
+    .poster ul { margin: 8px 0 0; padding-left: 20px; display: grid; gap: 6px; }
+    @media (max-width: 700px) { .poster { grid-template-columns: 1fr; } .poster img { max-width: 320px; } }
   </style>
 </head>
 <body>
@@ -85,8 +112,11 @@
     <p>Serie de simuladores web en 3D para estudiar el agua de Colombia con álgebra y geometría analítica, del páramo al océano. Cada simulador es autónomo y entrega a sus vecinos lo que sale de él; el sistema conectado los une a todos.</p>
     <nav class="indice" aria-label="Secciones de la página">
       <a href="#simuladores">Los simuladores</a>
+      <a href="#informe-qr">Informe con QR</a>
       <a href="#documentos">Base de información</a>
       <a href="#recorridos">Recorridos en video</a>
+      <a href="#curso">Relación con el curso</a>
+      <a href="#poster">Póster</a>
     </nav>
   </header>
   <main>
@@ -115,6 +145,20 @@
 {{TARJETAS}}
     </div>
 
+    <h2 id="informe-qr">Informe con código QR</h2>
+    <div class="qr-bloque">
+      <img src="IMAGENES/informe_qr.jpg" alt="Vista previa del informe de una simulación, con su código QR en la primera hoja" width="1200" height="750" loading="lazy">
+      <div>
+        <p class="intro">Cada simulador tiene la pestaña <b>Informe</b>. Arma un informe de la simulación para imprimir o guardar en PDF y le pone un <b>código QR</b> que abre el simulador publicado con los mismos valores, la misma fecha del reloj y la misma pestaña.</p>
+        <ol>
+          <li>Deja el simulador en el caso que quieres presentar: escenario, controles y reloj.</li>
+          <li>En la pestaña <b>Informe</b> escribe el título, los autores y las observaciones, y marca las pestañas y lo que lleva cada una.</li>
+          <li>Pulsa <b>Crear informe con QR</b> y, en la vista previa, <b>Imprimir o guardar PDF</b>.</li>
+          <li>Quien escanee el código ve tu simulación, en pausa, con un aviso de que es compartida. La pestaña también muestra el QR del momento y copia el enlace.</li>
+        </ol>
+      </div>
+    </div>
+
     <h2 id="documentos">Base de información</h2>
     <p class="intro">Cada simulador tiene dos documentos. El <b>informe técnico</b> explica el problema, el modelo matemático con sus ecuaciones, los supuestos, el escenario base y las referencias. El <b>manual de uso</b> enseña paso a paso a manejar el simulador: la escena 3D, cada pestaña con sus controles y resultados, los escenarios guiados, la descarga a Excel y la conexión con los demás simuladores. Los PDF se abren en el navegador y los archivos de Word se descargan para editarlos.</p>
     <div class="tabla">
@@ -127,10 +171,23 @@
     </div>
 
     <h2 id="recorridos">Recorridos en video</h2>
-    <p class="intro">Un recorrido de unos 45 segundos por cada simulador: girar la escena, cambiar de vista, mover un control, probar un escenario, leer la revisión del diseño y guardar los datos. Los mismos recorridos están en GIF para ponerlos en diapositivas o documentos.</p>
+    <p class="intro">Un recorrido de cerca de un minuto por cada simulador: girar la escena, cambiar de vista, mover un control, probar un escenario, leer la revisión del diseño, armar el informe con código QR y guardar los datos. Los mismos recorridos están en GIF para ponerlos en diapositivas o documentos.</p>
     <div class="videos">
 {{VIDEOS}}
     </div>
+
+    <h2 id="curso">Relación con el curso Introducción a las Ciencias del Agua y a la Tecnología</h2>
+    <p class="intro">La serie se revisó frente a la carpeta del curso: la guía de repaso de la Unidad 1, las guías de trabajo académico, el glosario, las presentaciones y el taller integrador del tercer seguimiento. La tabla dice en qué simulador y en qué pestaña se ve cada tema (U: unidad de la guía de repaso; B: bloque del taller integrador). Cada informe técnico trae la sección «Relación con el curso» con el detalle, las Ciencias del Agua que reúne el simulador y sus cuatro dimensiones.</p>
+    <div class="tabla">
+      <table class="curso">
+        <thead><tr><th scope="col">Tema del curso</th><th scope="col">Dónde se ve en la serie</th></tr></thead>
+        <tbody>
+{{CURSO}}
+        </tbody>
+      </table>
+    </div>
+    <div class="nota"><b>Para completar con el curso.</b> Estos temas se trabajan en clase porque la serie no los calcula todavía:<ul>{{FALTAN}}</ul></div>
+{{POSTER}}
   </main>
   <footer>Realizado por estudiantes de primer semestre Andrés Mauricio Peñaloza Fernández & Eliana Carolina María Wong Lubo para el proyecto integrador de Álgebra y Geometría Analítica - Luis Mario Duarte Sánchez; Álgebra lineal aplicada - Ellery Gregorio Chacuto López e Introducción a las ciencias del agua y a la tecnología - David Ricardo De León Pérez & Jaris Jesid González Moreno, 2026-II.  · Institución Universitaria de Santa Marta (USM) · Programa de Ingeniería del Agua y Desarrollo Sostenible.</footer>
 </body>

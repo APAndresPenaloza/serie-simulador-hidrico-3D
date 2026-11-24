@@ -4,3 +4,7 @@ _herramientas/documentos/salida/
 
 # Dependencias de las herramientas (MathJax para los PDF)
 node_modules/
+
+# Cuadros y videos de las grabaciones (se copian a VIDEOS/ y GIF/ al terminar)
+_herramientas/grabacion/salida/
+_herramientas/poster/salida/
