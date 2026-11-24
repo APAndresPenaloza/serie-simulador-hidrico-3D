@@ -84,6 +84,7 @@ PROYECTOS = {
             ('B4 Calidad y presiones', 'Oxígeno disuelto, DBO, coliformes y nitratos aguas abajo de un vertimiento, por zonas alta, media y baja.', 'Río'),
             ('B5 Acueducto y diseño', 'Bocatoma, desarenador, bombeo y aducción, tanque y red; dotación neta y bruta con pérdidas, QMD = k₁·Qmd y QMH = k₂·QMD (Resolución 0330 de 2017).', 'Captación a Vivienda'),
             ('B5 y U1.2 Hidráulica', 'Régimen laminar o turbulento (Reynolds), pérdidas en tuberías, curvas de bombas y NPSH, y canal trapezoidal con Manning.', 'Tuberías, Bombas, Arroyo'),
+            ('B6 Caso Gaira, en parte', 'Un río tipo de la Sierra Nevada, como el Gaira, con acueducto, riego y acuífero: la represa siempre suelta un caudal ambiental (un porcentaje del caudal medio) y la sequía de El Niño baja el río. La asignación entre usos, el caudal ecológico de la curva de duración y la intrusión salina se completan con el curso.', 'Represa, Lluvia, Acuífero'),
         ],
         'dimensiones': [
             ('Científica', 'Ecuaciones de hidrología, hidráulica, calidad y agua subterránea con los valores sustituidos.'),

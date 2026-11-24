@@ -32,8 +32,8 @@ Cada video se graba cuadro por cuadro con un reloj falso de Playwright: el simul
    cuatro, para revisar el guion rápido) y `--verificar` (sin cuadros: corre las acciones e imprime el texto
    de cada paso para revisar las cifras). Sin GPU tarda de 7 a 16 minutos por simulador.
 
-3. Cada grabación deja en `salida/<medio>/` el MP4 (1280 × 720, 24 cuadros/s), el GIF (960 × 540) y la
-   portada (JPG). Se copian a la raíz de la serie:
+3. Cada grabación deja en `salida/<medio>/` el MP4 (1920 × 1080: la página a 1280 × 720 con escala 1.5; 24 cuadros/s),
+   el GIF (960 × 540) y la portada (JPG de 960 × 540). Se copian a la raíz de la serie:
 
    ```
    cp salida/01_Lagunas/01_Lagunas.mp4 ../../VIDEOS/
