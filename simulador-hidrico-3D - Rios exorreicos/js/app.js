@@ -18,6 +18,7 @@ import { ExperimentoReynolds } from './reynolds.js';
 import { Registro, INTERVALOS, relojSimulado, crearLibro, nombreArchivo, descargarArchivo, libroRepresa, libroAno, libroHuella, libroCultivos, libroLluvia, libroLluviaMeses } from './datos.js';
 import * as N from './nodo.js';
 import { crearFrontera, textoFrontera, nombreFrontera, leerArchivo, EnlaceVivo, PROYECTOS, RED, MAGNITUDES, nombreProyecto, recibeDe } from './conexion.js';
+import { crearPanelInforme, leerEstado, urlConEstado, mismoTipo, compactar, compactarEstado, capturarEscena, avisoCompartido } from './informe.js';
 
 // ── Estado ────────────────────────────────────────────────────────────────
 const NIVEL_INICIAL = 4.4;
@@ -28,6 +29,10 @@ let r = S.calcular(p, sim);
 /** Cota del río en la bocatoma con la represa (el control del panel es la del río natural). */
 const cotaEf = () => r.cotaRioEf ?? p.cotaRio;
 let tabActiva = 'captacion';
+let ultimaTab = tabActiva;      // la última pestaña del modelo que se miró (va en el QR)
+let panelInforme = null;
+let BASE_RIO = null;            // parámetros al abrir el simulador (referencia del informe y del QR)
+const CLAVES_SIM = ['nivel', 'nivelEmbalse', 'bomba', 'arranques'];   // estado que avanza con el reloj
 // Registro de la simulación (serie de tiempo, arranques y paradas, escenarios) para el Excel
 const registro = new Registro();
 registro.reiniciar(HORA_INICIAL);
@@ -79,6 +84,7 @@ const TABS = [
   { id: 'acuifero', nombre: 'Acuífero', extra: true, revision: true, corte: true, intro: 'Bajo el valle hay agua subterránea: llena los poros de una capa de arena o grava (el acuífero) y se mueve muy despacio. En la montaña es un aluvión delgado de grava en el fondo del valle; en el piedemonte, un abanico de arena gruesa y grava; en la llanura, una capa de arena bajo arcilla. Según el nivel del río, el río le entrega agua al acuífero o el acuífero alimenta al río. Un pozo que bombea baja el nivel a su alrededor (cono de abatimiento) y, si el cono alcanza el río, atrae su agua: con ella pueden llegar los contaminantes. Aquí se eligen la zona, las capas del terreno y el pozo; en la escena, la vista Acuífero muestra el corte del terreno de esa zona con el agua subterránea en movimiento.' },
   { id: 'arroyo', nombre: 'Arroyo', intro: 'Con los aguaceros los arroyos de la ciudad crecen de golpe. El canal trapezoidal, excavado por debajo de la calle, tiene que conducir la crecida sin desbordarse.' },
   { id: 'datos', nombre: 'Datos', datos: true, intro: 'Guarda la información de la simulación en un libro de Excel: los parámetros y resultados, la serie de tiempo que se registra mientras corre el reloj, los arranques y paradas de la bomba, la revisión del diseño, las cantidades de obra y los escenarios que guardes para compararlos.' },
+  { id: 'informe', nombre: 'Informe', informe: true },
   { id: 'conexion', nombre: 'Conexión', conexion: true, intro: 'Este simulador es parte de una serie que sigue el agua del páramo al océano. Aquí se ve lo que el río entrega a la ciénaga por su desembocadura (su <b>frontera de salida</b>) y se aplica lo que le llega del lago de aguas arriba. Se conecta de tres formas: con un archivo de frontera (.json), en vivo con otro simulador abierto en el mismo navegador, o con el proyecto <b>Sistema conectado</b>, que une todos los modelos.' },
 ];
 
@@ -542,6 +548,12 @@ function crearPanel() {
     }
     if (t.conexion) {
       crearFichaConexion(t, f);
+      continue;
+    }
+    if (t.informe) {
+      elFichas.appendChild(f);
+      fichas[t.id] = { raiz: f };
+      panelInforme = crearPanelInforme(f, adaptadorInforme);
       continue;
     }
     f.innerHTML = `
@@ -2894,6 +2906,7 @@ function pintarDiseno(f, datos) {
 function pintarTab(id) {
   if (id === 'datos') { pintarDatos(true); return; }
   if (id === 'conexion') { pintarConexion(); return; }
+  if (id === 'informe') { panelInforme?.pintar(true); return; }
   const datos = PINTORES[id]();
   const f = fichas[id];
   setHTML(f.metricas, datos.metricas);
@@ -3622,8 +3635,10 @@ function pintarPanel() {
   pintarReloj();
 }
 
-function mostrarTab(id) {
+/** silencioso: sin mover la cámara ni recordar la pestaña (lo usa el informe al recorrerlas). */
+function mostrarTab(id, silencioso = false) {
   tabActiva = id;
+  if (!silencioso && PINTORES[id]) ultimaTab = id;
   for (const t of TABS) {
     const activa = t.id === id;
     const b = document.getElementById(`pestana-${t.id}`);
@@ -3631,9 +3646,9 @@ function mostrarTab(id) {
     b.tabIndex = activa ? 0 : -1;
     fichas[t.id].raiz.hidden = !activa;
   }
-  escena?.seleccionar(id);
+  if (!silencioso) escena?.seleccionar(id);
   pintarTab(id);
-  experimento?.activar(id === 'tuberias');
+  if (!silencioso) experimento?.activar(id === 'tuberias');
 }
 
 function elegirCasa(id) {
@@ -3705,6 +3720,8 @@ function bucle(ahora) {
       const dinamicas = ['tanque', 'captacion', 'vivienda', 'tuberias', 'red', 'riego', 'represa'];
       if (tabActiva === 'conexion') {
         pintarConexion();
+      } else if (tabActiva === 'informe') {
+        panelInforme?.pintar(false);
       } else if (tabActiva === 'datos') {
         const conGrafica = ahora - ultimaGrafica > 1000;
         if (conGrafica) ultimaGrafica = ahora;
@@ -3726,6 +3743,132 @@ function bucle(ahora) {
     }
   }
   requestAnimationFrame(bucle);
+}
+
+// ── Pestaña Informe: estado compartido por QR ────────────────────────────
+const iguales = (a, b) => (typeof a === 'number' && typeof b === 'number'
+  ? Math.abs(a - b) <= 1e-9 * Math.max(1, Math.abs(a), Math.abs(b))
+  : JSON.stringify(a) === JSON.stringify(b));
+
+/** Lo que viaja en el QR: el reloj, los parámetros que cambiaron y el estado del tanque y del embalse. */
+function estadoURL() {
+  const d = {};
+  for (const k of Object.keys(BASE_RIO ?? {})) if (!iguales(p[k], BASE_RIO[k])) d[k] = p[k];
+  const s = {};
+  for (const k of CLAVES_SIM) s[k] = sim[k];
+  const e = { v: 1, t: Math.round(sim.t), d: compactar(d), s: compactarEstado(s), tab: ultimaTab };
+  if (escena?.vista) e.vi = escena.vista;
+  return e;
+}
+
+/** Aplica un estado compartido (del QR). Si algo no cuadra, deja la simulación como estaba. */
+function aplicarCompartido(e) {
+  if (!BASE_RIO) return false;
+  const pAntes = structuredClone(p);
+  const simAntes = { ...sim };
+  const tabAntes = tabActiva;
+  try {
+    Object.assign(p, structuredClone(BASE_RIO));
+    if (entradaAplicada) aplicarFrontera(entradaAplicada, false);
+    for (const [k, v] of Object.entries(e.d ?? {})) {
+      if (Object.hasOwn(BASE_RIO, k) && mismoTipo(BASE_RIO[k], v)) p[k] = structuredClone(v);
+    }
+    if (Number.isFinite(e.t)) sim.t = Math.max(0, e.t);
+    for (const [k, v] of Object.entries(e.s ?? {})) {
+      if (CLAVES_SIM.includes(k) && mismoTipo(sim[k], v)) sim[k] = v;
+    }
+    sim.corriendo = false;
+    if (typeof e.tab === 'string' && PINTORES[e.tab]) tabActiva = ultimaTab = e.tab;
+    recalcular();
+    registro.reiniciar(sim.t);
+    return true;
+  } catch (err) {
+    console.warn('No se pudo abrir la simulación compartida:', err);
+    for (const k of Object.keys(p)) if (!(k in pAntes)) delete p[k];
+    Object.assign(p, pAntes);
+    Object.assign(sim, simAntes);
+    tabActiva = tabAntes;
+    try { recalcular(); } catch { /* queda como estaba */ }
+    return false;
+  }
+}
+
+/** Los parámetros de los controles, en texto (para comparar con los de referencia). */
+function filasParametros() {
+  const filas = [];
+  const vistos = new Set();
+  for (const c of CONTROLES) {
+    if (c.grupo || c.accion) continue;
+    const id = c.clave ?? c.tubo ?? c.id;
+    if (vistos.has(id)) continue;
+    vistos.add(id);
+    const tab = TABS.find((x) => x.id === c.tab).nombre;
+    let texto;
+    if (c.tipo === 'tubo') {
+      const e = r.especs[c.tubo];
+      texto = `${D.MATERIALES[p[`mat${c.tubo}`]].nombre} · ${e.dn} · ${e.clase}`;
+    } else if (c.tipo === 'material') texto = MATERIALES.find((m) => m.n === p.nManning)?.nombre ?? String(p.nManning);
+    else if (c.tipo === 'opciones') {
+      const opciones = typeof c.opciones === 'function' ? c.opciones() : c.opciones;
+      texto = textoPlano(opciones.find((o) => String(o.valor) === String(p[c.clave]))?.nombre ?? String(p[c.clave]));
+    } else if (c.tipo === 'casilla') texto = p[c.clave] ? 'sí' : 'no';
+    else {
+      const v = leerControl(c);
+      texto = typeof v === 'number' ? fmt(v, c.dec ?? 2) : String(v);
+    }
+    filas.push({ clave: id, tab, etiqueta: c.etiqueta, unidad: c.tipo ? '' : (c.unidad ?? ''), texto });
+  }
+  return filas;
+}
+
+/** Controles cuyo valor es distinto del que tenía el simulador al abrirlo. */
+function parametrosCambiados() {
+  if (!BASE_RIO) return [];
+  const actual = filasParametros();
+  const guardado = structuredClone(p);
+  const rGuardado = r;
+  let ref = [];
+  try {
+    Object.assign(p, structuredClone(BASE_RIO));
+    r = S.calcular(p, sim);
+    ref = filasParametros();
+  } finally {
+    for (const k of Object.keys(p)) if (!(k in guardado)) delete p[k];
+    Object.assign(p, guardado);
+    r = rGuardado;
+  }
+  const mapa = new Map(ref.map((x) => [x.clave, x.texto]));
+  return actual.filter((x) => mapa.has(x.clave) && mapa.get(x.clave) !== x.texto)
+    .map((x) => ({ bloque: x.tab, etiqueta: x.etiqueta, unidad: x.unidad, valor: x.texto, referencia: mapa.get(x.clave) }));
+}
+
+const adaptadorInforme = {
+  get titulo() { return document.querySelector('.marca h1')?.textContent.trim() || 'Simulador hídrico 3D'; },
+  get subtitulo() { return document.querySelector('.marca h1 + p')?.textContent.trim() || 'Ríos exorreicos'; },
+  carpeta: PROYECTOS.find((x) => x.id === 'rios')?.carpeta ?? 'simulador-hidrico-3D - Rios exorreicos',
+  textoReferencia: 'simulador al abrirlo',
+  tabs: () => TABS.filter((t) => PINTORES[t.id]).map((t) => ({ id: t.id, nombre: t.nombre })),
+  tabActiva: () => tabActiva,
+  mostrar: (id, silencioso) => mostrarTab(id, silencioso),
+  escenario: () => `${R.LLUVIAS[p.lluvia]?.nombre ?? 'Lluvia personalizada'} · ${L.clima(p.climaAno).nombre}`,
+  estadoURL,
+  parametros: parametrosCambiados,
+  capturaEscena: () => (escena?.renderer
+    ? capturarEscena(document.getElementById('escena'), () => escena.renderer.render(escena.scene, escena.camara))
+    : null),
+};
+
+/** Tras abrir un QR: pinta todo y avisa. */
+function anunciarCompartido(e) {
+  sincronizarControles();
+  mostrarTab(tabActiva, true);
+  if (e.vi && escena) escena.irAVista(e.vi, true);
+  pintarPanel();
+  actualizarEscena();
+  const btn = document.getElementById('btnPlay');
+  btn.textContent = 'Reanudar';
+  btn.setAttribute('aria-pressed', 'false');
+  avisoCompartido(`Abriste una simulación compartida con código QR: ${textoPlano(adaptadorInforme.escenario())}, ${document.getElementById('reloj').textContent}. Está en pausa para que veas los mismos valores; pulsa «Reanudar» para seguir.`);
 }
 
 // ── Arranque ─────────────────────────────────────────────────────────────
@@ -3764,14 +3907,28 @@ function iniciar() {
     });
   }
   recalcular();
+  BASE_RIO = structuredClone(p);       // la referencia: como queda el simulador al abrirlo
+  const compartido = leerEstado();
+  const abierto = compartido ? aplicarCompartido(compartido) : false;
   sincronizarControles();
-  mostrarTab('captacion');
+  mostrarTab(abierto ? tabActiva : 'captacion');
   pintarPanel();
   actualizarEscena();
   iniciarEnlace();
-  if (location.hash === '#depurar') window.__sim = { escena, p, sim, cambio, frontera: fronteraActual, aplicar: (fr) => recibirFrontera(fr, 'prueba') };
+  if (abierto) anunciarCompartido(compartido);
+  window.addEventListener('hashchange', () => {
+    const e = leerEstado();
+    if (e && aplicarCompartido(e)) anunciarCompartido(e);
+  });
+  if (location.hash === '#depurar') {
+    window.__sim = {
+      escena, p, sim, cambio, frontera: fronteraActual, aplicar: (fr) => recibirFrontera(fr, 'prueba'), mostrarTab,
+      estadoURL, parametrosCambiados, url: () => urlConEstado(adaptadorInforme.carpeta, estadoURL()), informe: () => panelInforme?.crear(),
+    };
+  }
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => pintarTab(tabActiva));
   requestAnimationFrame(bucle);
+  document.documentElement.dataset.listo = '1';
 }
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciar);

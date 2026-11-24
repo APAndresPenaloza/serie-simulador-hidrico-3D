@@ -25,6 +25,7 @@ import { fmt, redondear, limitar, escaparHTML, textoPlano, horaTexto, fechaDeDia
 import { crearGrafica, actualizarGrafica, paleta } from './graficas.js';
 import { Registro, crearLibro, nombreArchivo, descargarArchivo } from './datos.js';
 import { crearFrontera, textoFrontera, nombreFrontera, leerArchivo, EnlaceVivo, PROYECTOS, RED, MAGNITUDES, MAGNITUDES_MAR, nombreProyecto, recibeDe } from './conexion.js';
+import { crearPanelInforme, leerEstado, urlConEstado, mismoTipo, compactar, compactarEstado, capturarEscena, avisoCompartido } from './informe.js';
 
 // ── Ayudas para los pintores (las mismas del simulador de ríos) ──────────────
 export const ecu = {
@@ -91,11 +92,14 @@ export function iniciarSimulador(def) {
   const p = structuredClone(base);
   const relojDef = { tipo: 'horas', inicio: 6 * 3600, velocidades: [{ valor: 600, nombre: '10 min por segundo' }], defecto: 600, inicioAno: 0, ...def.reloj };
   let sim = def.estadoInicial(p);
+  const CLAVES_SIM = Object.keys(sim).filter((k) => k !== 't');   // estado que avanza con el reloj (niveles, volúmenes…)
   sim.t = relojDef.inicio;
   sim.corriendo = true;
   sim.factor = relojDef.defecto;
   let r = def.calcular(p, sim);
   let tabActiva = def.tabInicial ?? def.tabs[0].id;
+  let ultimaTab = tabActiva;      // la última pestaña del modelo que se miró (va en el QR)
+  let panelInforme = null;
   const fichas = {};
   const graficas = {};
   const registro = new Registro(def.proyecto, def.serie?.columnas ?? [], def.serie?.intervaloDefecto ?? 3600);
@@ -134,7 +138,7 @@ export function iniciarSimulador(def) {
   // ── Panel ───────────────────────────────────────────────────────────────
   const elPestanas = document.getElementById('pestanas');
   const elFichas = document.getElementById('fichas');
-  const todas = [...def.tabs, { id: 'datos', nombre: 'Datos', especial: 'datos' }, { id: 'conexion', nombre: 'Conexión', especial: 'conexion' }];
+  const todas = [...def.tabs, { id: 'datos', nombre: 'Datos', especial: 'datos' }, { id: 'informe', nombre: 'Informe', especial: 'informe' }, { id: 'conexion', nombre: 'Conexión', especial: 'conexion' }];
   elPestanas.style.setProperty('--columnas', Math.ceil(todas.length / 2));
 
   /**
@@ -266,6 +270,7 @@ export function iniciarSimulador(def) {
       f.hidden = true;
       elFichas.appendChild(f);
       if (t.especial === 'datos') { crearFichaDatos(f); continue; }
+      if (t.especial === 'informe') { panelInforme = crearPanelInforme(f, adaptadorInforme); continue; }
       if (t.especial === 'conexion') { crearFichaConexion(f); continue; }
       const nGraf = t.graficas ?? 1;
       f.innerHTML = `
@@ -341,8 +346,10 @@ export function iniciarSimulador(def) {
     }
   }
 
-  function mostrarTab(id) {
+  /** silencioso: sin mover la cámara ni recordar la pestaña (lo usa el informe al recorrerlas). */
+  function mostrarTab(id, silencioso = false) {
     tabActiva = id;
+    if (!silencioso && def.tabs.some((t) => t.id === id)) ultimaTab = id;
     for (const t of todas) {
       const b = document.getElementById(`pestana-${t.id}`);
       b.setAttribute('aria-selected', String(t.id === id));
@@ -351,8 +358,9 @@ export function iniciarSimulador(def) {
     sincronizarControles();
     if (id === 'datos') pintarDatos();
     else if (id === 'conexion') pintarConexion();
+    else if (id === 'informe') panelInforme?.pintar(true);
     else pintarTab(id);
-    escena?.seleccionar(id);
+    if (!silencioso) escena?.seleccionar(id);
   }
 
   // ── Recalcular ──────────────────────────────────────────────────────────
@@ -364,6 +372,7 @@ export function iniciarSimulador(def) {
     recalcular();
     sincronizarControles(origen);
     pintarPanel(true);
+    if (tabActiva === 'informe') panelInforme?.pintar(true);
     pintarEstados();
     pintarReloj(); // un escenario puede mover el reloj aunque la simulación esté en pausa
     escena?.actualizar(p, r, sim);
@@ -373,6 +382,7 @@ export function iniciarSimulador(def) {
   function pintarPanel(conGraficas) {
     if (tabActiva === 'datos') pintarDatos();
     else if (tabActiva === 'conexion') pintarConexion();
+    else if (tabActiva === 'informe') panelInforme?.pintar(false);
     else pintarTab(tabActiva, conGraficas);
     pintarAlertas();
   }
@@ -713,6 +723,124 @@ export function iniciarSimulador(def) {
     for (const b of document.querySelectorAll('#vistas button')) b.setAttribute('aria-pressed', String(b.dataset.vista === nombre));
   }
 
+  // ── Pestaña Informe: estado compartido por QR ──────────────────────────
+  /** Parámetros de referencia: los del simulador al abrirlo, con el escenario elegido. */
+  function referencia() {
+    const ref = structuredClone(base);
+    const e = def.escenarios?.[p.escenario];
+    if (e) Object.assign(ref, structuredClone(e.cambios ?? {}), { escenario: p.escenario });
+    return ref;
+  }
+  const iguales = (a, b) => (typeof a === 'number' && typeof b === 'number'
+    ? Math.abs(a - b) <= 1e-9 * Math.max(1, Math.abs(a), Math.abs(b))
+    : JSON.stringify(a) === JSON.stringify(b));
+
+  /** Lo que viaja en el QR: escenario, reloj, parámetros que cambiaron y estado dinámico. */
+  function estadoURL() {
+    const ref = referencia();
+    const d = {};
+    for (const k of Object.keys(base)) {
+      if (k !== 'escenario' && !iguales(p[k], ref[k])) d[k] = p[k];
+    }
+    const s = {};
+    for (const k of CLAVES_SIM) if (sim[k] !== undefined) s[k] = sim[k];
+    const e = { v: 1, e: p.escenario ?? null, t: Math.round(sim.t), d: compactar(d) };
+    if (Object.keys(s).length) e.s = compactarEstado(s);
+    if (ultimaTab) e.tab = ultimaTab;
+    if (escena?.vista) e.vi = escena.vista;
+    return e;
+  }
+
+  /** Aplica un estado compartido (del QR). Si algo no cuadra, deja la simulación como estaba. */
+  function aplicarCompartido(e) {
+    const pAntes = structuredClone(p);
+    const simAntes = { ...sim };
+    const tabAntes = tabActiva;
+    try {
+      if (typeof e.e === 'string' && def.escenarios?.[e.e]) aplicarEscenario(e.e);
+      else {
+        for (const k of Object.keys(p)) delete p[k];
+        Object.assign(p, structuredClone(base));
+        if (entradaAplicada) aplicarFrontera(entradaAplicada, false);
+      }
+      for (const [k, v] of Object.entries(e.d ?? {})) {
+        if (k !== 'escenario' && Object.hasOwn(base, k) && mismoTipo(base[k], v)) p[k] = structuredClone(v);
+      }
+      reiniciarEstado(true);
+      if (Number.isFinite(e.t)) sim.t = Math.max(0, e.t);
+      for (const [k, v] of Object.entries(e.s ?? {})) {
+        if (CLAVES_SIM.includes(k) && mismoTipo(sim[k], v)) sim[k] = structuredClone(v);
+      }
+      sim.corriendo = false;
+      if (typeof e.tab === 'string' && def.tabs.some((t) => t.id === e.tab)) tabActiva = ultimaTab = e.tab;
+      def.calcular(p, sim);
+      registro.reiniciar(sim.t);
+      return true;
+    } catch (err) {
+      console.warn('No se pudo abrir la simulación compartida:', err);
+      for (const k of Object.keys(p)) delete p[k];
+      Object.assign(p, pAntes);
+      sim = simAntes;
+      tabActiva = tabAntes;
+      return false;
+    }
+  }
+
+  /** Controles cuyo valor es distinto del de referencia, con los dos valores en texto. */
+  function parametrosCambiados() {
+    const ref = referencia();
+    const valorEn = (c, q) => (c.leer ? c.leer(q, sim, r) : (c.aUI ? c.aUI(q[c.clave]) : q[c.clave]));
+    const textoDe = (c, v) => {
+      if (c.tipo === 'opciones') return textoPlano(opcionesDe(c).find((o) => String(o.valor) === String(v))?.nombre ?? String(v));
+      if (c.tipo === 'casilla') return v ? 'sí' : 'no';
+      return typeof v === 'number' ? fmt(v, c.dec ?? 2) : textoPlano(String(v ?? ''));
+    };
+    const filas = [];
+    const vistos = new Set();
+    for (const t of def.tabs) {
+      for (const c of def.controles.filter((x) => x.tab === t.id && !x.grupo && x.tipo !== 'accion' && x.clave !== 'escenario')) {
+        const id = c.clave ?? c.id;
+        if (vistos.has(id) || (c.visible && !c.visible(p, r, sim))) continue;
+        let a, b;
+        try { a = valorEn(c, p); b = valorEn(c, ref); } catch { continue; }
+        if (iguales(a, b)) continue;
+        vistos.add(id);
+        filas.push({ bloque: t.nombre, etiqueta: c.etiqueta, unidad: c.unidad ?? '', valor: textoDe(c, a), referencia: textoDe(c, b) });
+      }
+    }
+    return filas;
+  }
+
+  const carpeta = PROYECTOS.find((x) => x.id === def.proyecto)?.carpeta ?? def.proyecto;
+  const adaptadorInforme = {
+    titulo: def.titulo,
+    subtitulo: def.subtitulo,
+    carpeta,
+    tabs: () => def.tabs.map((t) => ({ id: t.id, nombre: t.nombre })),
+    tabActiva: () => tabActiva,
+    mostrar: (id, silencioso) => mostrarTab(id, silencioso),
+    escenario: () => textoPlano(def.escenarios?.[p.escenario]?.nombre ?? ''),
+    estadoURL,
+    parametros: parametrosCambiados,
+    capturaEscena: () => (escena?.renderer
+      ? capturarEscena(document.getElementById('escena'), () => escena.renderer.render(escena.scene, escena.camara))
+      : null),
+  };
+
+  /** Tras abrir un QR: pinta todo y avisa. */
+  function anunciarCompartido(e) {
+    recalcular();
+    sincronizarControles();
+    mostrarTab(tabActiva, true);
+    if (e.vi && escena) escena.irAVista(e.vi, true);
+    pintarEstados();
+    pintarReloj();
+    pintarAlertas();
+    escena?.actualizar(p, r, sim);
+    const nombre = def.escenarios?.[p.escenario]?.nombre;
+    avisoCompartido(`Abriste una simulación compartida con código QR${nombre ? `: escenario «${escaparHTML(textoPlano(nombre))}»` : ''}, ${escaparHTML(relojTexto(sim.t))}. Está en pausa para que veas los mismos valores; pulsa «Reanudar» para seguir.`);
+  }
+
   // ── API para documentar y probar (manual e informe) ─────────────────────
   window.__sim = {
     def, base,
@@ -734,6 +862,10 @@ export function iniciarSimulador(def) {
     avanzar(segundos) { avanzarTiempo(segundos); cambio(); pintarReloj(); },
     mostrarTab,
     vista(id) { escena?.irAVista(id, true); },
+    estadoURL,
+    url: () => urlConEstado(carpeta, estadoURL()),
+    parametrosCambiados,
+    informe: () => panelInforme?.crear(),
     estados: () => def.estados(p, r, sim),
     frontera: () => (def.nodo ? fronteraActual() : null),
     recibir: (fr) => recibirFrontera(fr, 'prueba'),
@@ -786,6 +918,8 @@ export function iniciarSimulador(def) {
     }
   }
   if (def.escenarioInicial) aplicarEscenario(def.escenarioInicial);
+  const compartido = leerEstado();
+  const abierto = compartido ? aplicarCompartido(compartido) : false;
   recalcular();
   mostrarTab(tabActiva);
   pintarEstados();
@@ -793,6 +927,12 @@ export function iniciarSimulador(def) {
   pintarAlertas();
   iniciarEnlace();
   escena?.actualizar(p, r, sim);
+  if (abierto) anunciarCompartido(compartido);
+  // Un enlace con otro estado pegado en esta misma página (solo cambia el «#…»)
+  window.addEventListener('hashchange', () => {
+    const e = leerEstado();
+    if (e && aplicarCompartido(e)) anunciarCompartido(e);
+  });
   requestAnimationFrame((t) => { ultimo = t; requestAnimationFrame(bucle); });
   document.documentElement.dataset.listo = '1';
   return window.__sim;
